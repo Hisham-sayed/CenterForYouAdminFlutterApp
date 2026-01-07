@@ -1,0 +1,198 @@
+import 'package:flutter/material.dart';
+import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_routes.dart';
+import '../data/content_model.dart';
+import '../data/subject_model.dart';
+import '../subjects_controller.dart';
+import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_form_field.dart';
+import '../../../../shared/widgets/auto_direction.dart';
+
+class LessonsScreen extends StatefulWidget {
+  const LessonsScreen({super.key});
+
+  @override
+  State<LessonsScreen> createState() => _LessonsScreenState();
+}
+
+class _LessonsScreenState extends State<LessonsScreen> {
+  final SubjectsController _controller = SubjectsController();
+
+  // Arguments
+  List<String> breadcrumbs = [];
+  Subject? subject;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic>) {
+      breadcrumbs = List<String>.from(args['breadcrumbs'] ?? []);
+      if (args['data'] is Subject) {
+        subject = args['data'];
+        _controller.loadLessons(subject?.id ?? '0');
+      }
+    }
+  }
+
+  void _showAddEditDialog({Lesson? existingLesson, int? index}) {
+    final TextEditingController textController = TextEditingController(text: existingLesson?.title);
+    final subjectId = subject?.id ?? '0';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(existingLesson == null ? 'Add Lesson Folder' : 'Edit Folder', 
+          style: const TextStyle(color: AppColors.textPrimary)),
+        content: AppFormField(
+          controller: _controller,
+          fieldName: 'Title',
+          textEditingController: textController,
+          hintText: 'Folder Name',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              bool success = false;
+              if (existingLesson == null) {
+                success = await _controller.addLesson(subjectId, textController.text);
+              } else {
+                success = await _controller.editLesson(existingLesson.id, subjectId, textController.text);
+              }
+              
+              if (!context.mounted) return;
+              if (success) {
+                Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Failed to save lesson.')),
+                );
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteLesson(Lesson lesson) {
+    final subjectId = subject?.id ?? '0';
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Delete Folder', style: TextStyle(color: AppColors.textPrimary)),
+        content: const Text('Are you sure? This will delete all videos inside.', 
+            style: TextStyle(color: AppColors.textSecondary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () async {
+              final success = await _controller.deleteLesson(lesson.id, subjectId);
+              if (!context.mounted) return;
+              if (success) {
+                Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Failed to delete lesson.')),
+                );
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fullBreadcrumbs = [...breadcrumbs, 'Lessons'];
+
+    return AppScaffold(
+      title: 'Lessons',
+      breadcrumbs: fullBreadcrumbs,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddEditDialog(),
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.create_new_folder, color: Colors.black),
+      ),
+      body: ListenableBuilder(
+        listenable: _controller,
+        builder: (context, _) {
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: _controller.lessons.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final lesson = _controller.lessons[index];
+              return Card(
+                child: ListTile(
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context, 
+                      AppRoutes.videos, 
+                      arguments: {
+                         'data': lesson,
+                         'breadcrumbs': fullBreadcrumbs,
+                      }
+                    );
+                  },
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.folder, color: AppColors.primary),
+                  ),
+                  title: AutoDirection(
+                    text: lesson.title,
+                    child: Text(
+                      lesson.title,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: AppColors.textSecondary),
+                        onPressed: () => _showAddEditDialog(existingLesson: lesson),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: AppColors.error),
+                        onPressed: () => _deleteLesson(lesson),
+                      ),
+                      const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}

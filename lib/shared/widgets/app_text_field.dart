@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
+
+import '../../core/utils/text_utils.dart';
+
+class AppTextField extends StatefulWidget {
+  final TextEditingController? controller;
+  final String hintText;
+  final IconData? prefixIcon;
+  final ValueChanged<String>? onChanged;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+
+  const AppTextField({
+    super.key,
+    this.controller,
+    required this.hintText,
+    this.prefixIcon,
+    this.onChanged,
+    this.obscureText = false,
+    this.keyboardType,
+  });
+
+  @override
+  State<AppTextField> createState() => _AppTextFieldState();
+}
+
+class _AppTextFieldState extends State<AppTextField> {
+  TextDirection _textDirection = TextDirection.ltr;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.controller != null) {
+      widget.controller!.addListener(_handleControllerChange);
+      _handleControllerChange(); // Initial check
+    }
+  }
+
+  @override
+  void dispose() {
+    if (widget.controller != null) {
+      widget.controller!.removeListener(_handleControllerChange);
+    }
+    super.dispose();
+  }
+
+  void _handleControllerChange() {
+    final text = widget.controller!.text;
+    _updateDirection(text);
+  }
+
+  void _handleChanged(String value) {
+    _updateDirection(value);
+    widget.onChanged?.call(value);
+  }
+
+  void _updateDirection(String text) {
+    if (text.isEmpty) return; // Keep previous or default
+    final direction = TextUtils.getDirection(text);
+    if (direction != _textDirection) {
+      setState(() {
+        _textDirection = direction;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: widget.controller,
+      onChanged: _handleChanged,
+      obscureText: widget.obscureText,
+      keyboardType: widget.keyboardType,
+      textDirection: _textDirection,
+      // When RTL, we usually want text to align to the right side of the box?
+      // TextField with RTL textDirection automaticaly aligns to the 'start' (which is right).
+      // But let's verify visual appearance.
+      style: const TextStyle(color: AppColors.textPrimary),
+      decoration: InputDecoration(
+        hintText: widget.hintText,
+        prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon, color: AppColors.textSecondary) : null,
+        // Align hint text? Hint text usually follows directionality of the input decoration which uses the widget's Directionality?
+        // TextField's textDirection affects input text.
+      ),
+    );
+  }
+}
