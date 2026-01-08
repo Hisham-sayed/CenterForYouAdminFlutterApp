@@ -128,7 +128,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
             itemBuilder: (context, index) {
               final lesson = _controller.lessons[index];
               return Card(
-                child: ListTile(
+                child: InkWell(
                   onTap: () {
                     Navigator.pushNamed(
                       context, 
@@ -139,38 +139,48 @@ class _LessonsScreenState extends State<LessonsScreen> {
                       }
                     );
                   },
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.folder, color: AppColors.primary),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: AutoDirection(
+                            text: lesson.title,
+                            child: Text(
+                              lesson.title,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: AppColors.textSecondary),
+                              onPressed: () => _showAddEditDialog(existingLesson: lesson),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: AppColors.error),
+                              onPressed: () => _deleteLesson(lesson),
+                            ),
+                            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                          ],
+                        ),
+                      ],
                     ),
-                    child: const Icon(Icons.folder, color: AppColors.primary),
-                  ),
-                  title: AutoDirection(
-                    text: lesson.title,
-                    child: Text(
-                      lesson.title,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: AppColors.textSecondary),
-                        onPressed: () => _showAddEditDialog(existingLesson: lesson),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: AppColors.error),
-                        onPressed: () => _deleteLesson(lesson),
-                      ),
-                      const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                    ],
                   ),
                 ),
               );

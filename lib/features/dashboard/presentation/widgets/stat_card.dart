@@ -35,7 +35,7 @@ class StatCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
-                  overflow: TextOverflow.ellipsis,
+                  // Removed overflow: ellipsis to allow natural wrapping
                 ),
               ),
               const SizedBox(width: 8),

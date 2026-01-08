@@ -153,53 +153,75 @@ class _VideosScreenState extends State<VideosScreen> {
             itemBuilder: (context, index) {
               final video = _controller.videos[index];
               return Card(
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.play_circle_outline, color: AppColors.primary),
-                  ),
-                  title: Text(
-                    video.title,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  subtitle: Text(
-                    video.url,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: AppColors.textSecondary),
-                        onPressed: () => _showAddEditDialog(existingVideo: video),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.play_circle_outline, color: AppColors.primary),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  video.title,
+                                  style: const TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                if (video.url.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    video.url,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: AppColors.error),
-                        onPressed: () => _deleteVideo(video),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          _openSecurePlayer(video.url, video.title);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.surfaceHighlight,
-                          foregroundColor: AppColors.primary,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        ),
-                        icon: const Icon(Icons.play_arrow, size: 16),
-                        label: const Text('Watch'),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              _openSecurePlayer(video.url, video.title);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.surfaceHighlight,
+                              foregroundColor: AppColors.primary,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                            icon: const Icon(Icons.play_arrow, size: 16),
+                            label: const Text('Watch'),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: AppColors.textSecondary),
+                            onPressed: () => _showAddEditDialog(existingVideo: video),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: AppColors.error),
+                            onPressed: () => _deleteVideo(video),
+                          ),
+                        ],
                       ),
                     ],
                   ),

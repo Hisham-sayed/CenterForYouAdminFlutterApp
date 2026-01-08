@@ -184,49 +184,65 @@ class _ExamsScreenState extends State<ExamsScreen> {
             itemBuilder: (context, index) {
               final exam = _controller.exams[index];
               return Card(
-                child: ListTile(
+                child: InkWell(
                   onTap: () => _launchExam(exam.link ?? ''),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.description, color: AppColors.primary),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                exam.title,
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (exam.link != null && exam.link!.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  exam.link!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Open Exam',
+                              icon: const Icon(Icons.open_in_new, color: AppColors.primary),
+                              onPressed: () => _launchExam(exam.link ?? ''),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: AppColors.textSecondary),
+                              onPressed: () => _showAddEditDialog(existingExam: exam),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: AppColors.error),
+                              onPressed: () => _deleteExam(exam),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    child: const Icon(Icons.description, color: AppColors.primary),
-                  ),
-                  title: Text(
-                    exam.title,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  subtitle: (exam.link != null && exam.link!.isNotEmpty)
-                      ? Text(
-                          exam.link!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                        )
-                      : null,
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        tooltip: 'Open Exam',
-                        icon: const Icon(Icons.open_in_new, color: AppColors.primary),
-                        onPressed: () => _launchExam(exam.link ?? ''),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: AppColors.textSecondary),
-                        onPressed: () => _showAddEditDialog(existingExam: exam),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: AppColors.error),
-                        onPressed: () => _deleteExam(exam),
-                      ),
-                    ],
                   ),
                 ),
               );

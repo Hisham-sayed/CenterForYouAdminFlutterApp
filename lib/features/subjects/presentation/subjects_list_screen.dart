@@ -233,40 +233,7 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
             itemBuilder: (context, index) {
               final subject = _controller.subjects[index];
               return Card(
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  leading: Container(
-                    child: AppNetworkImage(
-                      imagePath: subject.imageUrl,
-                      width: 50,
-                      height: 50,
-                      borderRadius: 8,
-                    ), 
-                  ),
-                  title: AutoDirection(
-                    text: subject.title,
-                    child: Text(
-                      subject.title,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                       IconButton(
-                        icon: const Icon(Icons.edit, color: AppColors.textSecondary),
-                        onPressed: () => _showAddEditDialog(existingSubject: subject),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: AppColors.error),
-                        onPressed: () => _deleteSubject(subject),
-                      ),
-                      const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                    ],
-                  ),
+                child: InkWell(
                   onTap: () {
                     Navigator.pushNamed(
                       context, 
@@ -277,6 +244,51 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
                       }
                     );
                   },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: AppNetworkImage(
+                            imagePath: subject.imageUrl,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: AutoDirection(
+                            text: subject.title,
+                            child: Text(
+                              subject.title,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                             IconButton(
+                              icon: const Icon(Icons.edit, color: AppColors.textSecondary),
+                              onPressed: () => _showAddEditDialog(existingSubject: subject),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: AppColors.error),
+                              onPressed: () => _deleteSubject(subject),
+                            ),
+                            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               );
             },
