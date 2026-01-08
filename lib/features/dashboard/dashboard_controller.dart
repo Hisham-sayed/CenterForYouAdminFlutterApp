@@ -26,7 +26,7 @@ class DashboardController extends BaseController {
           totalLessons: data['lessonsCount'] ?? 0,
           totalVideos: data['videosCount'] ?? 0,
           totalExams: data['examsCount'] ?? 0,
-          studentGrowth: 0.0,
+          // studentGrowth: 0.0,
         );
       }
     });

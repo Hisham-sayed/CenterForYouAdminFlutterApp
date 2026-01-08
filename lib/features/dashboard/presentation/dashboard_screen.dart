@@ -72,22 +72,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     // Responsive Grid
-                    final double width = constraints.maxWidth;
-                    final int crossAxisCount = width > 600 ? 4 : 2;
+                    // Responsive Wrap Layout
+                    double spacing = 16;
+                    double availableWidth = constraints.maxWidth;
+                    // Dynamic columns based on width threshold
+                    int columns = availableWidth > 900 ? 5 : availableWidth > 600 ? 3 : 2;
+                    // Ensure minimum width for cards
+                    if (availableWidth < 350) columns = 1;
                     
-                    return GridView.count(
-                      crossAxisCount: crossAxisCount,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: width < 400 ? 0.9 : 1.1, 
-                      children: [
+                    double itemWidth = (availableWidth - (spacing * (columns - 1))) / columns;
+
+                    // Manual list of widgets since it was GridView.count with children
+                    List<Widget> children = [
                         StatCard(
                           title: 'Students',
                           value: stats.totalStudents.toString(),
                           icon: Icons.people,
-                          subtext: '+${stats.studentGrowth}% from last month',
                         ),
                         StatCard(
                           title: 'Subjects',
@@ -109,7 +109,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           value: stats.totalExams.toString(),
                           icon: Icons.assignment,
                         ),
-                      ],
+                    ];
+                    
+                    return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children: children.map((child) => SizedBox(width: itemWidth, child: child)).toList(),
                     );
                   },
                 ),

@@ -6,6 +6,7 @@ import '../data/content_model.dart';
 import '../data/subject_model.dart';
 import '../subjects_controller.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_dialog.dart';
 
 class ExamsScreen extends StatefulWidget {
   const ExamsScreen({super.key});
@@ -92,10 +93,8 @@ class _ExamsScreenState extends State<ExamsScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(existingExam == null ? 'Add Exam' : 'Edit Exam', 
-          style: const TextStyle(color: AppColors.textPrimary)),
+      builder: (context) => AppDialog(
+        title: existingExam == null ? 'Add Exam' : 'Edit Exam',
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -106,43 +105,36 @@ class _ExamsScreenState extends State<ExamsScreen> {
             const SizedBox(height: 12),
             AppTextField(
               controller: linkController,
-              hintText: 'Exam Link (Required)', // Updated hint
+              hintText: 'Exam Link (Required)',
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (textController.text.isEmpty || linkController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter both title and link.')),
-                );
-                return;
-              }
+        onConfirm: () async {
+          if (textController.text.isEmpty || linkController.text.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Please enter both title and link.')),
+            );
+            return;
+          }
 
-              bool success = false;
-              if (existingExam == null) {
-                success = await _controller.addExam(subjectId, textController.text, linkController.text);
-              } else {
-                success = await _controller.editExam(existingExam.id, subjectId, textController.text, linkController.text);
-              }
-              
-              if (!context.mounted) return;
-              if (success) {
-                Navigator.pop(context);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Failed to save exam.')),
-                );
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+          bool success = false;
+          if (existingExam == null) {
+            success = await _controller.addExam(subjectId, textController.text, linkController.text);
+          } else {
+            success = await _controller.editExam(existingExam.id, subjectId, textController.text, linkController.text);
+          }
+          
+          if (!context.mounted) return;
+          if (success) {
+            Navigator.pop(context);
+          } else {
+             if (_controller.hasError) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                 SnackBar(content: Text(_controller.validationSummary)),
+               );
+             }
+          }
+        },
       ),
     );
   }
@@ -151,30 +143,23 @@ class _ExamsScreenState extends State<ExamsScreen> {
     final subjectId = subject?.id ?? '0';
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Delete Exam', style: TextStyle(color: AppColors.textPrimary)),
+      builder: (context) => AppDialog(
+        title: 'Delete Exam',
         content: const Text('Are you sure?', style: TextStyle(color: AppColors.textSecondary)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () async {
-              final success = await _controller.deleteExam(exam.id, subjectId);
-              if (!context.mounted) return;
-              if (success) {
-                 Navigator.pop(context);
-              } else {
-                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Failed to delete exam.')),
-                );
-              }
-            },
-            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
+        confirmText: 'Delete',
+        onConfirm: () async {
+          final success = await _controller.deleteExam(exam.id, subjectId);
+          if (!context.mounted) return;
+          if (success) {
+             Navigator.pop(context);
+          } else {
+             if (_controller.hasError) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                 SnackBar(content: Text(_controller.validationSummary)),
+               );
+             }
+          }
+        },
       ),
     );
   }

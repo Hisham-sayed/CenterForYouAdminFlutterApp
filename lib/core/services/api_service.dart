@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import '../error/exceptions.dart';
 import 'package:http/http.dart' as http;
@@ -14,6 +15,10 @@ class ApiService {
 
   final http.Client _client = http.Client();
   String? _token;
+  
+  // Stream for 401 events
+  final _unauthorizedController = StreamController<void>.broadcast();
+  Stream<void> get onUnauthorized => _unauthorizedController.stream;
 
   void setToken(String token) {
     _token = token;
@@ -148,6 +153,7 @@ class ApiService {
       }
       
       if (response.statusCode == 401) {
+        _unauthorizedController.add(null); // Notify listeners
         throw ServerException(statusCode: 401, responseData: errorData);
       }
       

@@ -35,39 +35,50 @@ class SubjectDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.0,
-                children: [
-                  SubjectCard(
-                    title: 'Exams',
-                    icon: Icons.description_outlined,
-                    onTap: () => Navigator.pushNamed(
-                      context, 
-                      AppRoutes.exams,
-                      arguments: {
-                        'data': subject, // Pass Subject object
-                        'breadcrumbs': fullBreadcrumbs,
-                      }
+            LayoutBuilder(
+              builder: (context, constraints) {
+                double spacing = 16;
+                double availableWidth = constraints.maxWidth;
+                int columns = availableWidth > 600 ? 4 : 2;
+                double itemWidth = (availableWidth - (spacing * (columns - 1))) / columns;
+
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  children: [
+                    SizedBox(
+                      width: itemWidth,
+                      child: SubjectCard(
+                        title: 'Exams',
+                        icon: Icons.description_outlined,
+                        onTap: () => Navigator.pushNamed(
+                          context, 
+                          AppRoutes.exams,
+                          arguments: {
+                            'data': subject, // Pass Subject object
+                            'breadcrumbs': fullBreadcrumbs,
+                          }
+                        ),
+                      ),
                     ),
-                  ),
-                  SubjectCard(
-                    title: 'Lessons',
-                    icon: Icons.video_library_outlined,
-                    onTap: () => Navigator.pushNamed(
-                      context, 
-                      AppRoutes.lessons,
-                      arguments: {
-                        'data': subject, // Pass Subject object
-                        'breadcrumbs': fullBreadcrumbs,
-                      }
+                    SizedBox(
+                      width: itemWidth,
+                      child: SubjectCard(
+                        title: 'Lessons',
+                        icon: Icons.video_library_outlined,
+                        onTap: () => Navigator.pushNamed(
+                          context, 
+                          AppRoutes.lessons,
+                          arguments: {
+                            'data': subject, // Pass Subject object
+                            'breadcrumbs': fullBreadcrumbs,
+                          }
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                );
+              },
             ),
           ],
         ),

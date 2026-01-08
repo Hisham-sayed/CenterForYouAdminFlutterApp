@@ -152,8 +152,8 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
                   if (success) {
                     Navigator.pop(context);
                   } else {
-                     if (_controller.errorMessage != null) {
-                        ErrorSnackBar.show(context, _controller.errorMessage!);
+                     if (_controller.hasError) {
+                        ErrorSnackBar.show(context, _controller.validationSummary);
                      }
                   }
                 },

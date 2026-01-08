@@ -36,6 +36,9 @@ class AppNetworkImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
+        // Memory optimization: Resize image in memory to display size
+        cacheWidth: width != null ? (width! * 2).toInt() : null, // *2 for retina displays
+        cacheHeight: height != null ? (height! * 2).toInt() : null,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return Container(

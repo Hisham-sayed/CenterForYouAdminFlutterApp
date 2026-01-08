@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../shared/screens/secure_video_player_screen.dart';
 import '../../../shared/widgets/app_form_field.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../graduation_controller.dart';
 import '../data/graduation_video_model.dart'; 
 
@@ -30,9 +31,8 @@ class _GraduationPartiesScreenState extends State<GraduationPartiesScreen> {
     
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(isEditing ? 'Edit Graduation Party' : 'Add Graduation Party', style: const TextStyle(color: AppColors.textPrimary)),
+      builder: (context) => AppDialog(
+        title: isEditing ? 'Edit Graduation Party' : 'Add Graduation Party',
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -51,45 +51,31 @@ class _GraduationPartiesScreenState extends State<GraduationPartiesScreen> {
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-               _controller.clearErrors(); // Clear previous errors on close
-               Navigator.pop(context);
-            },
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (titleController.text.isNotEmpty) {
-                 bool success;
-                 if (isEditing) {
-                   success = await _controller.editVideo(video.id, titleController.text, urlController.text);
-                 } else {
-                   success = await _controller.addVideo(titleController.text, urlController.text);
-                 }
-                 
-                if (!context.mounted) return;
-                if (success) {
-                  Navigator.pop(context);
-                } else {
-                  // If not validation error (which shows inline), show generic
-                  if (_controller.validationErrors == null && _controller.errorMessage != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(_controller.errorMessage!)),
-                    );
-                  } else if (_controller.validationErrors == null && _controller.errorMessage == null) {
-                     // Fallback
-                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to ${isEditing ? 'edit' : 'add'} video.')),
-                    );
-                  }
-                }
-              }
-            },
-            child: Text(isEditing ? 'Save' : 'Add'),
-          ),
-        ],
+        onCancel: () {
+           _controller.clearErrors(); 
+           Navigator.pop(context);
+        },
+        onConfirm: () async {
+          if (titleController.text.isNotEmpty) {
+             bool success;
+             if (isEditing) {
+               success = await _controller.editVideo(video.id, titleController.text, urlController.text);
+             } else {
+               success = await _controller.addVideo(titleController.text, urlController.text);
+             }
+             
+            if (!context.mounted) return;
+            if (success) {
+              Navigator.pop(context);
+            } else {
+               if (_controller.hasError) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(_controller.validationSummary)),
+                  );
+               }
+            }
+          }
+        },
       ),
     );
   }
@@ -97,30 +83,23 @@ class _GraduationPartiesScreenState extends State<GraduationPartiesScreen> {
   void _deleteVideo(GraduationVideo video) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Delete Party', style: TextStyle(color: AppColors.textPrimary)),
+      builder: (context) => AppDialog(
+        title: 'Delete Party',
         content: const Text('Are you sure you want to delete this video?', style: TextStyle(color: AppColors.textSecondary)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () async {
-              final success = await _controller.deleteVideo(video.id);
-              if (!context.mounted) return;
-              if (success) {
-                Navigator.pop(context);
-              } else {
-                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Failed to delete video.')),
-                );
-              }
-            },
-            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
+        confirmText: 'Delete',
+        onConfirm: () async {
+          final success = await _controller.deleteVideo(video.id);
+          if (!context.mounted) return;
+          if (success) {
+            Navigator.pop(context);
+          } else {
+             if (_controller.hasError) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                 SnackBar(content: Text(_controller.validationSummary)),
+               );
+             }
+          }
+        },
       ),
     );
   }
@@ -158,61 +137,52 @@ class _GraduationPartiesScreenState extends State<GraduationPartiesScreen> {
              return const Center(child: Text('No videos found', style: TextStyle(color: AppColors.textSecondary)));
           }
 
-          return GridView.builder(
+          return ListView.separated(
             padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 1, // Full width cards look better for video placeholders
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.5,
-            ),
             itemCount: _controller.videos.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
               final video = _controller.videos[index];
               return Card(
                 clipBehavior: Clip.antiAlias,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                     // Placeholder Image
-                    Container(
-                      color: AppColors.surfaceHighlight,
-                      child: Center(
-                        child: Icon(
-                          Icons.movie_creation_outlined,
-                          size: 64,
-                          color: AppColors.textSecondary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ),
-                    // Overlay Gradient
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.8),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Content
+                child: Column( // Changed from Stack to Column to allow content to grow naturally below image/placeholder
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     // Video Preview / Placeholder
+                     Container(
+                       height: 200, // Fixed height for media preview is standard
+                       width: double.infinity,
+                       color: AppColors.surfaceHighlight,
+                       child: Stack( // Stack for overlay on image
+                         fit: StackFit.expand,
+                         children: [
+                           Center(
+                            child: Icon(
+                              Icons.movie_creation_outlined,
+                              size: 64,
+                              color: AppColors.textSecondary.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          // Optional: Real image here if available
+                         ],
+                       ),
+                     ),
+                     
+                    // Content Section
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             video.title,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.textPrimary, // Adjusted color since it's not on dark overlay anymore
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 16),
                           Row(
                             children: [
                               ElevatedButton.icon(

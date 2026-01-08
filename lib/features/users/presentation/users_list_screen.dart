@@ -6,6 +6,8 @@ import '../users_controller.dart';
 import '../data/user_model.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/info_row.dart';
 
 class UsersListScreen extends StatefulWidget {
   const UsersListScreen({super.key});
@@ -95,12 +97,8 @@ class _UsersListScreenState extends State<UsersListScreen> {
                        ));
                     }
                     final user = _controller.filteredUsers[index];
-                    return Card(
-                      color: const Color(0xFF1A1F2C),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.1)),
-                      ),
+                    return AppCard(
+                      padding: EdgeInsets.zero,
                       child: Theme(
                         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                         child: ExpansionTile(
@@ -124,9 +122,9 @@ class _UsersListScreenState extends State<UsersListScreen> {
                               child: Column(
                                 children: [
                                   Divider(color: Colors.white.withValues(alpha: 0.1)),
-                                  _buildInfoRow(Icons.email_outlined, 'Email', user.email),
+                                  InfoRow(icon: Icons.email_outlined, label: 'Email', value: user.email),
                                   const SizedBox(height: 12),
-                                  _buildInfoRow(Icons.phone_outlined, 'Phone', user.phoneNumber ?? 'N/A'),
+                                  InfoRow(icon: Icons.phone_outlined, label: 'Phone', value: user.phoneNumber ?? 'N/A'),
                                 ],
                               ),
                             ),
@@ -141,41 +139,6 @@ class _UsersListScreenState extends State<UsersListScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceHighlight,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, size: 20, color: AppColors.primary),
-        ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-            Text(
-              value,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

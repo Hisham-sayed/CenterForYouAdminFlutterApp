@@ -8,6 +8,7 @@ import '../subjects_controller.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_form_field.dart';
 import '../../../../shared/widgets/auto_direction.dart';
+import '../../../../shared/widgets/app_dialog.dart';
 
 class LessonsScreen extends StatefulWidget {
   const LessonsScreen({super.key});
@@ -48,42 +49,33 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(existingLesson == null ? 'Add Lesson Folder' : 'Edit Folder', 
-          style: const TextStyle(color: AppColors.textPrimary)),
+      builder: (context) => AppDialog(
+        title: existingLesson == null ? 'Add Lesson Folder' : 'Edit Folder',
         content: AppFormField(
           controller: _controller,
           fieldName: 'Title',
           textEditingController: textController,
           hintText: 'Folder Name',
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              bool success = false;
-              if (existingLesson == null) {
-                success = await _controller.addLesson(subjectId, textController.text);
-              } else {
-                success = await _controller.editLesson(existingLesson.id, subjectId, textController.text);
-              }
-              
-              if (!context.mounted) return;
-              if (success) {
-                Navigator.pop(context);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Failed to save lesson.')),
-                );
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+        onConfirm: () async {
+          bool success = false;
+          if (existingLesson == null) {
+            success = await _controller.addLesson(subjectId, textController.text);
+          } else {
+            success = await _controller.editLesson(existingLesson.id, subjectId, textController.text);
+          }
+          
+          if (!context.mounted) return;
+          if (success) {
+            Navigator.pop(context);
+          } else {
+             if (_controller.hasError) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                 SnackBar(content: Text(_controller.validationSummary)),
+               );
+             }
+          }
+        },
       ),
     );
   }
@@ -92,31 +84,24 @@ class _LessonsScreenState extends State<LessonsScreen> {
     final subjectId = subject?.id ?? '0';
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Delete Folder', style: TextStyle(color: AppColors.textPrimary)),
+      builder: (context) => AppDialog(
+        title: 'Delete Folder',
         content: const Text('Are you sure? This will delete all videos inside.', 
             style: TextStyle(color: AppColors.textSecondary)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () async {
-              final success = await _controller.deleteLesson(lesson.id, subjectId);
-              if (!context.mounted) return;
-              if (success) {
-                Navigator.pop(context);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Failed to delete lesson.')),
-                );
-              }
-            },
-            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
+        confirmText: 'Delete',
+        onConfirm: () async {
+          final success = await _controller.deleteLesson(lesson.id, subjectId);
+          if (!context.mounted) return;
+          if (success) {
+            Navigator.pop(context);
+          } else {
+             if (_controller.hasError) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                 SnackBar(content: Text(_controller.validationSummary)),
+               );
+             }
+          }
+        },
       ),
     );
   }

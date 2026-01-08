@@ -4,7 +4,7 @@ class DashboardStats {
   final int totalLessons;
   final int totalVideos;
   final int totalExams;
-  final double studentGrowth; // e.g., 12.5%
+  // final double studentGrowth; // e.g., 12.5%
 
   const DashboardStats({
     this.totalStudents = 0,
@@ -12,6 +12,6 @@ class DashboardStats {
     this.totalLessons = 0,
     this.totalVideos = 0,
     this.totalExams = 0,
-    this.studentGrowth = 0.0,
+    // this.studentGrowth = 0.0,
   });
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../features/auth/auth_controller.dart';
+import '../../core/services/api_service.dart';
 import '../constants/app_routes.dart';
+import 'dart:async';
 
 class AuthLifecycleGuard extends StatefulWidget {
   final Widget child;
@@ -17,15 +19,23 @@ class AuthLifecycleGuard extends StatefulWidget {
 }
 
 class _AuthLifecycleGuardState extends State<AuthLifecycleGuard> with WidgetsBindingObserver {
+  StreamSubscription? _authSubscription;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    
+    // Listen for global 401 events
+    _authSubscription = ApiService().onUnauthorized.listen((_) {
+      _redirectToLogin();
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _authSubscription?.cancel();
     super.dispose();
   }
 
@@ -41,14 +51,17 @@ class _AuthLifecycleGuardState extends State<AuthLifecycleGuard> with WidgetsBin
     final isValid = await auth.checkAuth();
     
     if (!isValid) {
-        // If session is invalid, use the navigator key to redirect
-        // Check if we are already safely possibly on login to avoid loops?
-        // simple pushReplacementNamed is safer to clean stack
-        widget.navigatorKey.currentState?.pushNamedAndRemoveUntil(
-          AppRoutes.login,
-          (route) => false,
-        );
+        _redirectToLogin();
     }
+  }
+
+  void _redirectToLogin() {
+    // Prevent duplicate navigations if already validating or on login
+    // For now simple pushReplacement is enough
+    widget.navigatorKey.currentState?.pushNamedAndRemoveUntil(
+      AppRoutes.login,
+      (route) => false,
+    );
   }
 
   @override

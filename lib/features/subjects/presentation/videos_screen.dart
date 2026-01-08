@@ -6,6 +6,7 @@ import '../../../shared/screens/secure_video_player_screen.dart';
 import '../data/content_model.dart';
 import '../subjects_controller.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_dialog.dart';
 
 class VideosScreen extends StatefulWidget {
   const VideosScreen({super.key});
@@ -54,10 +55,8 @@ class _VideosScreenState extends State<VideosScreen> {
     
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(existingVideo == null ? 'Add Video' : 'Edit Video', 
-          style: const TextStyle(color: AppColors.textPrimary)),
+      builder: (context) => AppDialog(
+        title: existingVideo == null ? 'Add Video' : 'Edit Video',
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -72,32 +71,25 @@ class _VideosScreenState extends State<VideosScreen> {
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              bool success = false;
-              if (existingVideo == null) {
-                success = await _controller.addVideo(lessonId, titleController.text, urlController.text);
-              } else {
-                success = await _controller.editVideo(existingVideo.id, lessonId, titleController.text, urlController.text);
-              }
-              
-              if (!context.mounted) return;
-              if (success) {
-                Navigator.pop(context);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Failed to save video.')),
-                );
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+        onConfirm: () async {
+          bool success = false;
+          if (existingVideo == null) {
+            success = await _controller.addVideo(lessonId, titleController.text, urlController.text);
+          } else {
+            success = await _controller.editVideo(existingVideo.id, lessonId, titleController.text, urlController.text);
+          }
+          
+          if (!context.mounted) return;
+          if (success) {
+            Navigator.pop(context);
+          } else {
+             if (_controller.hasError) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                 SnackBar(content: Text(_controller.validationSummary)),
+               );
+             }
+          }
+        },
       ),
     );
   }
@@ -106,30 +98,23 @@ class _VideosScreenState extends State<VideosScreen> {
     final lessonId = lesson?.id ?? '0';
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Delete Video', style: TextStyle(color: AppColors.textPrimary)),
+      builder: (context) => AppDialog(
+        title: 'Delete Video',
         content: const Text('Are you sure?', style: TextStyle(color: AppColors.textSecondary)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () async {
-              final success = await _controller.deleteVideo(video.id, lessonId);
-              if (!context.mounted) return;
-              if (success) {
-                Navigator.pop(context);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Failed to delete video.')),
-                );
-              }
-            },
-            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
+        confirmText: 'Delete',
+        onConfirm: () async {
+          final success = await _controller.deleteVideo(video.id, lessonId);
+          if (!context.mounted) return;
+          if (success) {
+            Navigator.pop(context);
+          } else {
+             if (_controller.hasError) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                 SnackBar(content: Text(_controller.validationSummary)),
+               );
+             }
+          }
+        },
       ),
     );
   }

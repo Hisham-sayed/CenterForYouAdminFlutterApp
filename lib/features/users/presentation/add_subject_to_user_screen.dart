@@ -73,12 +73,20 @@ class _AddSubjectToUserScreenState extends State<AddSubjectToUserScreen> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Updated $successCount subjects for user')),
-    );
-    // Since sidebar uses pushReplacement, pop() causes black screen (empty stack).
-    // Navigate to users list instead.
-    Navigator.pushReplacementNamed(context, AppRoutes.users);
+    if (result) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Updated $successCount subjects for user')),
+      );
+      // Since sidebar uses pushReplacement, pop() causes black screen (empty stack).
+      // Navigate to users list instead.
+      Navigator.pushReplacementNamed(context, AppRoutes.users);
+    } else {
+       if (_usersController.hasError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(_usersController.validationSummary)),
+          );
+       }
+    }
   }
 
   @override
@@ -186,7 +194,12 @@ class _AddSubjectToUserScreenState extends State<AddSubjectToUserScreen> {
                               children: [
                                 const Icon(Icons.email_outlined, color: AppColors.textSecondary, size: 16),
                                 const SizedBox(width: 8),
-                                Text(_foundUser!.email, style: const TextStyle(color: AppColors.textSecondary)),
+                                Expanded(
+                                  child: Text(
+                                    _foundUser!.email,
+                                    style: const TextStyle(color: AppColors.textSecondary),
+                                  ),
+                                ),
                               ],
                             ),
                             if (_foundUser!.phoneNumber != null && _foundUser!.phoneNumber!.isNotEmpty) ...[
@@ -195,7 +208,12 @@ class _AddSubjectToUserScreenState extends State<AddSubjectToUserScreen> {
                                   children: [
                                     const Icon(Icons.phone_outlined, color: AppColors.textSecondary, size: 16),
                                     const SizedBox(width: 8),
-                                    Text(_foundUser!.phoneNumber!, style: const TextStyle(color: AppColors.textSecondary)),
+                                    Expanded(
+                                      child: Text(
+                                        _foundUser!.phoneNumber!,
+                                        style: const TextStyle(color: AppColors.textSecondary),
+                                      ),
+                                    ),
                                   ],
                                 ),
                             ],
@@ -385,31 +403,29 @@ class _AddSubjectToUserScreenState extends State<AddSubjectToUserScreen> {
   }
 
   Widget _buildSelectionGrid(List<String> items, String? selectedItem, Function(String) onSelect) {
-    return Column(
+    return Wrap(
+      spacing: 12, // Gap between items
+      runSpacing: 12, // Gap between lines
       children: items.map((item) {
         final isSelected = item == selectedItem;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: InkWell(
-            onTap: () => onSelect(item),
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : const Color(0xFF11141C),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.05),
-                ),
+        return InkWell(
+          onTap: () => onSelect(item),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primary : const Color(0xFF11141C),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.05),
               ),
-              child: Text(
-                item,
-                style: TextStyle(
-                  color: isSelected ? Colors.black : Colors.white,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
-                ),
+            ),
+            child: Text(
+              item,
+              style: TextStyle(
+                color: isSelected ? Colors.black : Colors.white,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
               ),
             ),
           ),

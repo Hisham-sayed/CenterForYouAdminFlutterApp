@@ -13,6 +13,38 @@ abstract class BaseController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   Map<String, String>? get validationErrors => _validationErrors;
   bool get hasError => _errorMessage != null;
+  bool get hasValidationErrors => _validationErrors != null && _validationErrors!.isNotEmpty;
+
+  /// Returns a list of formatted validation error strings in the format:
+  /// "- Field: Error message"
+  List<String> get formattedValidationErrorsList {
+    if (_validationErrors == null) return [];
+    
+    return _validationErrors!.entries.map((e) {
+      // Clean up key: "VideoLink" -> "Video Link" (Simple camel case split if needed, 
+      // but for now we assume keys are decent).
+      // We can do a basic split by capital letters if strictly needed, 
+      // but usually keys like "VideoLink" are readable enough or we rely on API.
+      
+      // Clean up value: .NET Core often returns "'Field' must not be empty."
+      // We stripping the redundant field name from the start if present to avoid:
+      // "- Title: 'Title' must not be empty." -> "- Title: must not be empty." 
+      // OR we just keep it as is. 
+      // The user prompt example: "- Title: This field cannot be empty."
+      // ensuring we follow the requested structure.
+      
+      String field = e.key;
+      String message = e.value;
+      
+      return "- $field: $message";
+    }).toList();
+  }
+  
+  /// Returns a single string summary of validation errors.
+  String get validationSummary {
+    if (!hasValidationErrors) return errorMessage ?? 'Unknown Error';
+    return formattedValidationErrorsList.join('\n');
+  }
 
   /// Executes a [action] safely, handling loading state and errors automatically.
   /// 

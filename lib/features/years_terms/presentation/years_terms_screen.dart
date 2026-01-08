@@ -68,49 +68,58 @@ class _YearsTermsScreenState extends State<YearsTermsScreen> {
     return AppScaffold(
       title: title,
       breadcrumbs: fullBreadcrumbs,
-      body: GridView.builder(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.85,
-        ),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          // Determine type for casting
-          final String name = widget.isYears ? (item as AcademicYear).name : (item as AcademicTerm).name;
-          final IconData icon = widget.isYears ? Icons.calendar_today : Icons.school;
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Calculate item width based on available space to behave like a Grid
+            // typically 2 columns on mobile, more on tablet
+            double spacing = 16;
+            double availableWidth = constraints.maxWidth;
+            int columns = availableWidth > 600 ? 4 : 2;
+            double itemWidth = (availableWidth - (spacing * (columns - 1))) / columns;
 
-          return SubjectCard(
-            title: name,
-            icon: icon,
-            onTap: () {
-              if (widget.isYears) {
-                Navigator.pushNamed(
-                  context,
-                  AppRoutes.terms,
-                  arguments: {
-                    'data': item,
-                    'breadcrumbs': fullBreadcrumbs,
-                  },
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: List.generate(items.length, (index) {
+                final item = items[index];
+                final String name = widget.isYears ? (item as AcademicYear).name : (item as AcademicTerm).name;
+                final IconData icon = widget.isYears ? Icons.calendar_today : Icons.school;
+
+                return SizedBox(
+                  width: itemWidth,
+                  child: SubjectCard(
+                    title: name,
+                    icon: icon,
+                    onTap: () {
+                      if (widget.isYears) {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.terms,
+                          arguments: {
+                            'data': item,
+                            'breadcrumbs': fullBreadcrumbs,
+                          },
+                        );
+                      } else {
+                        Navigator.pushNamed(
+                          context, 
+                          AppRoutes.subjectsList,
+                          arguments: {
+                            'data': item, // This is AcademicTerm
+                            'breadcrumbs': fullBreadcrumbs,
+                            'isTerm': true, 
+                          }
+                        );
+                      }
+                    },
+                  ),
                 );
-              } else {
-                Navigator.pushNamed(
-                  context, 
-                  AppRoutes.subjectsList,
-                  arguments: {
-                    // We might need to pass the term object here
-                    'data': item, // This is AcademicTerm
-                    'breadcrumbs': fullBreadcrumbs,
-                    'isTerm': true, // Helper to know it's coming from term
-                  }
-                );
-              }
-            },
-          );
-        },
+              }),
+            );
+          },
+        ),
       ),
     );
   }
