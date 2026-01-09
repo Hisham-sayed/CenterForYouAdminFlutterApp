@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/services/api_service.dart';
+import '../../core/services/token_storage.dart';
 import '../../core/architecture/base_controller.dart';
 
 class AuthController extends BaseController {
@@ -26,13 +27,15 @@ class AuthController extends BaseController {
       if (response != null && response['isSuccess'] == true && response['hasData'] == true) {
         final data = response['data'];
         final token = data['token'];
+        final refreshToken = data['refreshToken']; // Ensure this key matches API
         
         // Store Token in ApiService
         ApiService().setToken(token);
         
-        // Persist Token
+        // Persist Tokens
+        await TokenStorage().saveTokens(accessToken: token, refreshToken: refreshToken ?? '');
+        
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
         await prefs.setString('user_id', data['id'] ?? '');
         await prefs.setString('user_name', data['name'] ?? '');
         await prefs.setString('user_email', data['email'] ?? '');
@@ -55,7 +58,7 @@ class AuthController extends BaseController {
       final prefs = await SharedPreferences.getInstance();
       
       // 1. Check for token existence
-      final token = prefs.getString('auth_token');
+      final token = await TokenStorage().getAccessToken();
       if (token == null || token.isEmpty) {
          return false;
       }
@@ -87,6 +90,8 @@ class AuthController extends BaseController {
   Future<void> logout() async {
     isAuthenticated = false;
     ApiService().setToken(''); 
+    
+    await TokenStorage().clearTokens();
     
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
