@@ -28,20 +28,18 @@ class AppFormField extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
-       final error = controller.validationErrors?[fieldName];
+        final error = controller.getFieldError(fieldName);
        
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppTextField(
-              controller: textEditingController,
-              hintText: hintText,
-              prefixIcon: prefixIcon,
-              obscureText: obscureText,
-              keyboardType: keyboardType,
-            ),
-            if (error != null) InlineErrorText(error),
-          ],
+        // We pass the error text directly to the text field if it supports it, 
+        // or keep using InlineErrorText if AppTextField doesn't expose errorText.
+        // Let's check AppTextField first.
+        return AppTextField(
+          controller: textEditingController,
+          hintText: hintText,
+          prefixIcon: prefixIcon,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          errorText: error, // Passing error text directly
         );
       },
     );

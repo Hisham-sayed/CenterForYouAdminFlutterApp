@@ -6,6 +6,7 @@ import '../../../shared/screens/secure_video_player_screen.dart';
 import '../data/content_model.dart';
 import '../subjects_controller.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_form_field.dart';
 import '../../../../shared/widgets/app_dialog.dart';
 
 class VideosScreen extends StatefulWidget {
@@ -60,13 +61,17 @@ class _VideosScreenState extends State<VideosScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppTextField(
-              controller: titleController,
+            AppFormField(
+              controller: _controller,
+              fieldName: 'title',
+              textEditingController: titleController,
               hintText: 'Video Title',
             ),
             const SizedBox(height: 12),
-            AppTextField(
-              controller: urlController,
+            AppFormField(
+              controller: _controller,
+              fieldName: 'url',
+              textEditingController: urlController,
               hintText: 'Video URL (YouTube/Vimeo)',
             ),
           ],
@@ -83,9 +88,9 @@ class _VideosScreenState extends State<VideosScreen> {
           if (success) {
             Navigator.pop(context);
           } else {
-             if (_controller.hasError) {
+             if (_controller.hasError && !_controller.hasValidationErrors) {
                ScaffoldMessenger.of(context).showSnackBar(
-                 SnackBar(content: Text(_controller.validationSummary)),
+                 SnackBar(content: Text(_controller.errorMessage ?? 'An error occurred')),
                );
              }
           }
@@ -160,15 +165,6 @@ class _VideosScreenState extends State<VideosScreen> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(Icons.play_circle_outline, color: AppColors.primary),
-                          ),
-                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

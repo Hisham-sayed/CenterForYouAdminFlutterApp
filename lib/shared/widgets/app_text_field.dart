@@ -10,6 +10,7 @@ class AppTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final bool obscureText;
   final TextInputType? keyboardType;
+  final String? errorText;
 
   const AppTextField({
     super.key,
@@ -19,6 +20,7 @@ class AppTextField extends StatefulWidget {
     this.onChanged,
     this.obscureText = false,
     this.keyboardType,
+    this.errorText,
   });
 
   @override
@@ -80,8 +82,8 @@ class _AppTextFieldState extends State<AppTextField> {
       decoration: InputDecoration(
         hintText: widget.hintText,
         prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon, color: AppColors.textSecondary) : null,
-        // Align hint text? Hint text usually follows directionality of the input decoration which uses the widget's Directionality?
-        // TextField's textDirection affects input text.
+        errorText: widget.errorText, // Use the error text here
+        errorStyle: const TextStyle(color: AppColors.error), // Ensure standard red error color
       ),
     );
   }

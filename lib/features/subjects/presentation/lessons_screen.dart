@@ -69,7 +69,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
           if (success) {
             Navigator.pop(context);
           } else {
-             if (_controller.hasError) {
+             if (_controller.hasError && !_controller.hasValidationErrors) {
                ScaffoldMessenger.of(context).showSnackBar(
                  SnackBar(content: Text(_controller.validationSummary)),
                );
@@ -95,7 +95,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
           if (success) {
             Navigator.pop(context);
           } else {
-             if (_controller.hasError) {
+             if (_controller.hasError && !_controller.hasValidationErrors) {
                ScaffoldMessenger.of(context).showSnackBar(
                  SnackBar(content: Text(_controller.validationSummary)),
                );

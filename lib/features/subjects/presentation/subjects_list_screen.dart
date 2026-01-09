@@ -152,8 +152,8 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
                   if (success) {
                     Navigator.pop(context);
                   } else {
-                     if (_controller.hasError) {
-                        ErrorSnackBar.show(context, _controller.validationSummary);
+                     if (_controller.hasError && !_controller.hasValidationErrors) {
+                        ErrorSnackBar.show(context, _controller.errorMessage ?? 'An error occurred');
                      }
                   }
                 },
@@ -191,9 +191,11 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
               if (success) {
                 Navigator.pop(context);
               } else {
-                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Failed to delete subject.')),
-                );
+                 if (_controller.hasError && !_controller.hasValidationErrors) {
+                   ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(_controller.errorMessage ?? 'Failed to delete subject.')),
+                   );
+                 }
               }
             },
             child: const Text('Delete', style: TextStyle(color: AppColors.error)),

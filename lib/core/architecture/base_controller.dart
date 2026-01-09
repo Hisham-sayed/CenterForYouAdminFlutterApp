@@ -46,6 +46,19 @@ abstract class BaseController extends ChangeNotifier {
     return formattedValidationErrorsList.join('\n');
   }
 
+  /// Returns the error message for a specific field, or null if none exists.
+  /// Keys are case-insensitive.
+  String? getFieldError(String fieldName) {
+    if (_validationErrors == null) return null;
+    return _validationErrors!.entries
+        .cast<MapEntry<String, String>?>()
+        .firstWhere(
+          (entry) => entry!.key.toLowerCase() == fieldName.toLowerCase(),
+          orElse: () => null,
+        )
+        ?.value;
+  }
+
   /// Executes a [action] safely, handling loading state and errors automatically.
   /// 
   /// [action] is the async function to execute.

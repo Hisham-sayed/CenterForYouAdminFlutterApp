@@ -68,9 +68,11 @@ class _GraduationPartiesScreenState extends State<GraduationPartiesScreen> {
             if (success) {
               Navigator.pop(context);
             } else {
-               if (_controller.hasError) {
+               // Only show SnackBar for generic errors (non-validation)
+               // Validation errors are now shown inline on the fields.
+               if (_controller.hasError && !_controller.hasValidationErrors) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(_controller.validationSummary)),
+                    SnackBar(content: Text(_controller.errorMessage ?? 'An error occurred')),
                   );
                }
             }
@@ -93,9 +95,9 @@ class _GraduationPartiesScreenState extends State<GraduationPartiesScreen> {
           if (success) {
             Navigator.pop(context);
           } else {
-             if (_controller.hasError) {
+             if (_controller.hasError && !_controller.hasValidationErrors) {
                ScaffoldMessenger.of(context).showSnackBar(
-                 SnackBar(content: Text(_controller.validationSummary)),
+                 SnackBar(content: Text(_controller.errorMessage ?? 'Error deleting video')),
                );
              }
           }

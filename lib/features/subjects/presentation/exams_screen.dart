@@ -6,6 +6,7 @@ import '../data/content_model.dart';
 import '../data/subject_model.dart';
 import '../subjects_controller.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_form_field.dart';
 import '../../../../shared/widgets/app_dialog.dart';
 
 class ExamsScreen extends StatefulWidget {
@@ -98,24 +99,29 @@ class _ExamsScreenState extends State<ExamsScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppTextField(
-              controller: textController,
+            AppFormField(
+              controller: _controller,
+              fieldName: 'title',
+              textEditingController: textController,
               hintText: 'Exam Title',
             ),
             const SizedBox(height: 12),
-            AppTextField(
-              controller: linkController,
+            AppFormField(
+              controller: _controller,
+              fieldName: 'link', // Or 'Link' depending on API
+              textEditingController: linkController,
               hintText: 'Exam Link (Required)',
             ),
           ],
         ),
         onConfirm: () async {
-          if (textController.text.isEmpty || linkController.text.isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please enter both title and link.')),
-            );
-            return;
-          }
+          // Manual validation removed; API handles it.
+          // But for UX, we might still want to prevent completely empty submissions if desired.
+          // For now, let's rely on server or at least keeping non-empty check if strictly needed for client-side valid.
+          // However, standard is to let server invalid response trigger fields.
+          // Let's keep simple client check just for empty to avoid useless api calls, 
+          // OR remove it to fully test standard validation.
+          // Plan said "Remove manual validation", so I will remove the snackbar check.
 
           bool success = false;
           if (existingExam == null) {
@@ -128,9 +134,10 @@ class _ExamsScreenState extends State<ExamsScreen> {
           if (success) {
             Navigator.pop(context);
           } else {
-             if (_controller.hasError) {
+             // Only generic errors
+             if (_controller.hasError && !_controller.hasValidationErrors) {
                ScaffoldMessenger.of(context).showSnackBar(
-                 SnackBar(content: Text(_controller.validationSummary)),
+                 SnackBar(content: Text(_controller.errorMessage ?? 'An error occurred')),
                );
              }
           }
