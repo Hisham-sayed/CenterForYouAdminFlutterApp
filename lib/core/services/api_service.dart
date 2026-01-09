@@ -159,14 +159,11 @@ class ApiService {
     return _performRequest(() => _client.delete(uri, headers: _headers));
   }
 
-  // Multipart POST Request
-  Future<dynamic> postMultipart(String endpoint, Map<String, String> fields, {File? file, String fileField = 'file'}) async {
-    // Multipart is tricky with the closure wrapper because MultipartRequest is one-off.
-    // We need to recreate the request inside the closure.
-    
+  // Generic Multipart Request
+  Future<dynamic> _multipartRequest(String method, String endpoint, Map<String, String> fields, {File? file, String fileField = 'file'}) async {
     return _performRequest(() async {
         final uri = Uri.parse('$baseUrl$endpoint');
-        final request = http.MultipartRequest('POST', uri);
+        final request = http.MultipartRequest(method, uri);
         request.headers.addAll(_headers);
         request.headers.remove('Content-Type'); 
         request.fields.addAll(fields);
@@ -184,6 +181,16 @@ class ApiService {
         final streamedResponse = await request.send();
         return http.Response.fromStream(streamedResponse);
     });
+  }
+
+  // Multipart POST Request
+  Future<dynamic> postMultipart(String endpoint, Map<String, String> fields, {File? file, String fileField = 'file'}) async {
+    return _multipartRequest('POST', endpoint, fields, file: file, fileField: fileField);
+  }
+
+  // Multipart PUT Request
+  Future<dynamic> putMultipart(String endpoint, Map<String, String> fields, {File? file, String fileField = 'file'}) async {
+    return _multipartRequest('PUT', endpoint, fields, file: file, fileField: fileField);
   }
 
   dynamic _handleResponse(http.Response response) {

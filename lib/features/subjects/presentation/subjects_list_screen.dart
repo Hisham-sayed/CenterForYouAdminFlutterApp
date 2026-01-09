@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../data/subject_model.dart';
+import 'widgets/subject_dialog.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/widgets/app_text_field.dart';
@@ -62,10 +63,6 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
   }
 
   void _showAddEditDialog({Subject? existingSubject}) {
-    final TextEditingController textController = TextEditingController(text: existingSubject?.title);
-    File? selectedImage;
-    final ImagePicker picker = ImagePicker();
-
     String termId = '1';
     try {
       termId = (termData as dynamic).id;
@@ -73,95 +70,23 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            backgroundColor: AppColors.surface,
-            title: Text(existingSubject == null ? 'Add Subject' : 'Edit Subject', 
-              style: const TextStyle(color: AppColors.textPrimary)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
-                  onTap: () async {
-                    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                    if (image != null) {
-                      setDialogState(() {
-                        selectedImage = File(image.path);
-                      });
-                    }
-                  },
-                  child: Container(
-                    height: 100,
-                    width: 100,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                    ),
-                    child: selectedImage != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(selectedImage!, fit: BoxFit.cover),
-                          )
-                        : existingSubject != null && existingSubject.imageUrl.isNotEmpty
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  existingSubject.imageUrl.startsWith('http')
-                                      ? existingSubject.imageUrl
-                                      : '${ApiService.baseUrl}/${existingSubject.imageUrl}',
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add_a_photo, color: AppColors.primary),
-                                  SizedBox(height: 4),
-                                  Text('Add Image', style: TextStyle(color: AppColors.primary, fontSize: 12)),
-                                ],
-                              ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                AppFormField(
-                  controller: _controller,
-                  fieldName: 'Title',
-                  textEditingController: textController,
-                  hintText: 'Subject Name',
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  bool success = false;
-                  if (existingSubject == null) {
-                    success = await _controller.addSubject(termId, textController.text, image: selectedImage);
-                  } else {
-                    success = await _controller.editSubject(existingSubject.id, termId, textController.text);
-                    // Note: Edit subject with image is not yet supported in controller/API based on previous code
-                  }
-                  
-                  if (!context.mounted) return;
-                  if (success) {
-                    Navigator.pop(context);
-                  } else {
-                     if (_controller.hasError && !_controller.hasValidationErrors) {
-                        ErrorSnackBar.show(context, _controller.errorMessage ?? 'An error occurred');
-                     }
-                  }
-                },
-                child: const Text('Save'),
-              ),
-            ],
-          );
-        }
+      barrierDismissible: false, // Prevent accidental close while loading is implicit in dialog, but explicit property good too
+      builder: (context) => SubjectDialog(
+        subject: existingSubject,
+        onSave: (title, image) async {
+          bool success;
+          if (existingSubject == null) {
+            success = await _controller.addSubject(termId, title, image: image);
+          } else {
+            success = await _controller.editSubject(existingSubject.id, termId, title, image: image);
+          }
+
+          if (!success && mounted) {
+             // Show error if failed
+             ErrorSnackBar.show(context, _controller.errorMessage ?? 'An error occurred');
+          }
+          return success;
+        },
       ),
     );
   }

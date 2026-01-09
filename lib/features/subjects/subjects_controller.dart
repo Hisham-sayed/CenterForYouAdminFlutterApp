@@ -93,9 +93,16 @@ class SubjectsController extends BaseController {
     return await safeCall(() async {
       final response = await ApiService().postMultipart(
         '/add-subject', 
-        { 'termId': termId, 'title': title },
-        file: image,
-        fileField: 'image',
+        { 'TermId': termId, 'Title': title }, // Using PascalCase keys if backend expects them match record properties? 
+        // Prompt says: public record AddSubjectRequest(int TermId, string Title...
+        // Usually model binding is case-insensitive in ASP.NET, but safer to match or use camelCase. 
+        // Previous code used camelCase 'termId'. I will stick to what works or use PasCal if suggested.
+        // Quick check: Prompt explicitly showed "public record AddSubjectRequest(int TermId, string Title...)". 
+        // Just to be safe, I will send both or stick to standard naming conventions. 
+        // Wait, standard ASP.NET Core binds 'termId' to 'TermId' fine.
+        // I will use PascalCase to be absolutely sure as per "Ensure duplicate keys match backend contract exactly".
+         file: image,
+        fileField: 'Image', // PascalCase for IFormFile? Image
       );
       
       if (response != null && response['isSuccess'] == true) {
@@ -106,11 +113,13 @@ class SubjectsController extends BaseController {
     });
   }
 
-  Future<bool> editSubject(String id, String termId, String newTitle) async {
+  Future<bool> editSubject(String id, String termId, String newTitle, {File? image}) async {
     return await safeCall(() async {
-      final response = await ApiService().put(
+      final response = await ApiService().putMultipart(
         '/update-subject',
-        body: { 'id': id, 'title': newTitle }
+        { 'Id': id, 'Title': newTitle }, // Correct keys for UpdateSubjectRequest(int Id, string Title...)
+        file: image,
+        fileField: 'Image',
       );
       if (response != null && response['isSuccess'] == true) {
         await loadSubjects(termId);
