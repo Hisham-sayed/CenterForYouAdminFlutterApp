@@ -38,7 +38,7 @@ class ApiService {
   /// Internal helper to perform requests with retry logic
   Future<dynamic> _performRequest(Future<http.Response> Function() requestCall) async {
     try {
-      final response = await requestCall();
+      final response = await requestCall().timeout(const Duration(seconds: 30));
       return _handleResponse(response);
     } on ServerException catch (e) {
       if (e.statusCode == 401) {
@@ -47,7 +47,7 @@ class ApiService {
         if (refreshed) {
            // Retry original request with new token
            try {
-             final retryResponse = await requestCall();
+             final retryResponse = await requestCall().timeout(const Duration(seconds: 30));
              return _handleResponse(retryResponse);
            } catch (retryError) {
              // If retry fails again, just throw
@@ -62,6 +62,8 @@ class ApiService {
       rethrow;
     } on SocketException {
       throw NetworkException();
+    } on TimeoutException {
+      throw NetworkException('Request timed out');
     } catch (e) {
       if (e is ServerException || e is NetworkException) rethrow;
       throw NetworkException(e.toString());

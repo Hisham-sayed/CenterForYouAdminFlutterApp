@@ -19,6 +19,7 @@ class LessonsScreen extends StatefulWidget {
 
 class _LessonsScreenState extends State<LessonsScreen> {
   final SubjectsController _controller = SubjectsController();
+  bool _isFirstLoad = true;
 
   // Arguments
   List<String> breadcrumbs = [];
@@ -38,7 +39,13 @@ class _LessonsScreenState extends State<LessonsScreen> {
       breadcrumbs = List<String>.from(args['breadcrumbs'] ?? []);
       if (args['data'] is Subject) {
         subject = args['data'];
-        _controller.loadLessons(subject?.id ?? '0');
+        _controller.loadLessons(subject?.id ?? '0').whenComplete(() {
+          if (mounted) {
+            setState(() {
+              _isFirstLoad = false;
+            });
+          }
+        });
       }
     }
   }
@@ -121,8 +128,14 @@ class _LessonsScreenState extends State<LessonsScreen> {
       body: ListenableBuilder(
         listenable: _controller,
         builder: (context, _) {
+          if (_isFirstLoad || _controller.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (_controller.lessons.isEmpty) {
+            return const Center(child: Text('No lessons found', style: TextStyle(color: AppColors.textSecondary)));
+          }
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             itemCount: _controller.lessons.length,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {

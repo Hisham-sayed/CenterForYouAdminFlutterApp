@@ -19,6 +19,7 @@ class VideosScreen extends StatefulWidget {
 class _VideosScreenState extends State<VideosScreen> {
   final SubjectsController _controller = SubjectsController();
   bool _initialized = false;
+  bool _isFirstLoad = true;
 
   // Arguments
   Lesson? lesson;
@@ -38,7 +39,13 @@ class _VideosScreenState extends State<VideosScreen> {
         lesson = args;
       }
       
-      _controller.loadVideosForLesson(lesson?.id ?? '0');
+      _controller.loadVideosForLesson(lesson?.id ?? '0').whenComplete(() {
+        if (mounted) {
+           setState(() {
+             _isFirstLoad = false;
+           });
+        }
+      });
       _initialized = true;
     }
   }
@@ -151,8 +158,14 @@ class _VideosScreenState extends State<VideosScreen> {
       body: ListenableBuilder(
         listenable: _controller,
         builder: (context, _) {
+          if (_isFirstLoad || _controller.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (_controller.videos.isEmpty) {
+            return const Center(child: Text('No videos found', style: TextStyle(color: AppColors.textSecondary)));
+          }
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             itemCount: _controller.videos.length,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {

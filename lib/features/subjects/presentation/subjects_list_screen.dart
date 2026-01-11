@@ -26,6 +26,7 @@ class SubjectsListScreen extends StatefulWidget {
 class _SubjectsListScreenState extends State<SubjectsListScreen> {
   final SubjectsController _controller = SubjectsController();
   bool _initialized = false;
+  bool _isFirstLoad = true;
 
   // Arguments
   dynamic termData;
@@ -50,7 +51,13 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
           screenTitle = 'Subjects';
         }
         
-        _controller.loadSubjects(termId);
+        _controller.loadSubjects(termId).whenComplete(() {
+          if (mounted) {
+            setState(() {
+              _isFirstLoad = false;
+            });
+          }
+        });
         _initialized = true;
       }
     }
@@ -145,7 +152,7 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
       body: ListenableBuilder(
         listenable: _controller,
         builder: (context, _) {
-          if (_controller.isLoading) {
+          if (_isFirstLoad || _controller.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
           
@@ -154,7 +161,7 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
           }
 
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             itemCount: _controller.subjects.length,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {

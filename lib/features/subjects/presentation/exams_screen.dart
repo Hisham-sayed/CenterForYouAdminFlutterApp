@@ -18,6 +18,7 @@ class ExamsScreen extends StatefulWidget {
 
 class _ExamsScreenState extends State<ExamsScreen> {
   final SubjectsController _controller = SubjectsController();
+  bool _isFirstLoad = true;
 
   // Arguments
   List<String> breadcrumbs = [];
@@ -35,7 +36,13 @@ class _ExamsScreenState extends State<ExamsScreen> {
         breadcrumbs = List<String>.from(args['breadcrumbs'] ?? []);
         if (args['data'] is Subject) {
           subject = args['data'];
-          _controller.loadExams(subject?.id ?? '0');
+          _controller.loadExams(subject?.id ?? '0').whenComplete(() {
+            if (mounted) {
+              setState(() {
+                _isFirstLoad = false;
+              });
+            }
+          });
         }
       }
       _initialized = true;
@@ -184,8 +191,14 @@ class _ExamsScreenState extends State<ExamsScreen> {
       body: ListenableBuilder(
         listenable: _controller,
         builder: (context, _) {
+          if (_isFirstLoad || _controller.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+           if (_controller.exams.isEmpty) {
+            return const Center(child: Text('No exams found', style: TextStyle(color: AppColors.textSecondary)));
+          }
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             itemCount: _controller.exams.length,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
