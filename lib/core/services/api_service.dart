@@ -43,20 +43,27 @@ class ApiService {
     } on ServerException catch (e) {
       if (e.statusCode == 401) {
         // Attempt Refresh
-        final refreshed = await _tryRefreshToken();
-        if (refreshed) {
-           // Retry original request with new token
-           try {
-             final retryResponse = await requestCall().timeout(const Duration(seconds: 30));
-             return _handleResponse(retryResponse);
-           } catch (retryError) {
-             // If retry fails again, just throw
-             rethrow;
-           }
-        } else {
-           // Refresh failed, notify unauthorized
-           _unauthorizedController.add(null);
-           rethrow; 
+        try {
+          final refreshed = await _tryRefreshToken();
+          if (refreshed) {
+             // Retry original request with new token
+             try {
+               final retryResponse = await requestCall().timeout(const Duration(seconds: 30));
+               return _handleResponse(retryResponse);
+             } catch (retryError) {
+               rethrow;
+             }
+          } else {
+             // Refresh failed (invalid token), notify unauthorized
+             _unauthorizedController.add(null);
+             rethrow; 
+          }
+        } on SocketException {
+           // Network error during refresh -> Return "No connection" instead of logout
+           throw NetworkException();
+        } on TimeoutException {
+           // Timeout during refresh -> Return "Timeout" instead of logout
+           throw NetworkException('Request timed out');
         }
       }
       rethrow;
@@ -93,7 +100,7 @@ class ApiService {
           'token': currentAccessToken,
           'refreshToken': currentRefreshToken,
         }),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final body = json.decode(response.body);
@@ -112,6 +119,10 @@ class ApiService {
         }
       }
       return false;
+    } on SocketException {
+      rethrow; // Important: Propagate network error
+    } on TimeoutException {
+      rethrow; // Important: Propagate timeout
     } catch (e) {
       debugPrint('Token Refresh Failed: $e');
       return false;

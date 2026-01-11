@@ -80,7 +80,19 @@ class AuthController extends BaseController {
       return true;
 
     } catch (e) {
-       // If any error (401, network, etc.), assume invalid session for startup safety
+       // Handle Network Exception specifically: Assume valid if token exists but offline
+       if (e.toString().contains('NetworkException') || e.toString().contains('SocketException')) {
+          debugPrint('Auth Validation: Offline mode assumed.');
+          final prefs = await SharedPreferences.getInstance();
+          userId = prefs.getString('user_id');
+          userName = prefs.getString('user_name');
+          userEmail = prefs.getString('user_email');
+          isAuthenticated = true;
+          notifyListeners();
+          return true; // Return true to keep user logged in
+       }
+
+       // If any OTHER error (401, etc.), assume invalid session
        debugPrint('Auth Validation Error: $e');
        await logout(); // Clear everything
        return false;
