@@ -161,6 +161,37 @@ class _VideosScreenState extends State<VideosScreen> {
           if (_isFirstLoad || _controller.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
+
+          if (_controller.hasError) {
+             return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.signal_wifi_off, size: 48, color: AppColors.textSecondary),
+                    const SizedBox(height: 16),
+                    Text(
+                      _controller.errorMessage ?? 'Connection Error',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                         setState(() { _isFirstLoad = true; });
+                         _controller.loadVideosForLesson(lesson?.id ?? '0').whenComplete(() {
+                            if (mounted) setState(() { _isFirstLoad = false; });
+                         });
+                      },
+                      child: const Text('Retry'),
+                    )
+                  ],
+                ),
+              ),
+            );
+          }
+
           if (_controller.videos.isEmpty) {
             return const Center(child: Text('No videos found', style: TextStyle(color: AppColors.textSecondary)));
           }

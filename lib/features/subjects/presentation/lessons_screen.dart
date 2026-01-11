@@ -131,6 +131,37 @@ class _LessonsScreenState extends State<LessonsScreen> {
           if (_isFirstLoad || _controller.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
+
+          if (_controller.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.signal_wifi_off, size: 48, color: AppColors.textSecondary),
+                    const SizedBox(height: 16),
+                    Text(
+                      _controller.errorMessage ?? 'Connection Error',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                         setState(() { _isFirstLoad = true; });
+                         _controller.loadLessons(subject?.id ?? '0').whenComplete(() {
+                            if (mounted) setState(() { _isFirstLoad = false; });
+                         });
+                      },
+                      child: const Text('Retry'),
+                    )
+                  ],
+                ),
+              ),
+            );
+          }
+
           if (_controller.lessons.isEmpty) {
             return const Center(child: Text('No lessons found', style: TextStyle(color: AppColors.textSecondary)));
           }

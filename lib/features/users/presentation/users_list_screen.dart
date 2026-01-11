@@ -77,6 +77,33 @@ class _UsersListScreenState extends State<UsersListScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
+                if (_controller.hasError && _controller.filteredUsers.isEmpty) {
+                   return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.signal_wifi_off, size: 48, color: AppColors.textSecondary),
+                          const SizedBox(height: 16),
+                          Text(
+                            _controller.errorMessage ?? 'Connection Error',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                               _controller.fetchUsers(searchKey: _searchController.text);
+                            },
+                            child: const Text('Retry'),
+                          )
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
                 if (_controller.filteredUsers.isEmpty) {
                   return const EmptyStateWidget(
                     message: 'No students found',
