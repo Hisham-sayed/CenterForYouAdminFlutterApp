@@ -6,8 +6,10 @@ import '../error/exceptions.dart';
 import 'package:http/http.dart' as http;
 import 'token_storage.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class ApiService {
-  static const String baseUrl = 'https://center-for-you.runasp.net';
+  static final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'https://center-for-you.runasp.net';
   
   // Singleton instance
   static final ApiService _instance = ApiService._internal();

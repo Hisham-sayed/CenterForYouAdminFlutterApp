@@ -22,11 +22,14 @@ import 'package:flutter/foundation.dart';
 
 import 'core/widgets/auth_lifecycle_guard.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
-  runZonedGuarded(() {
+  runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+    await dotenv.load(fileName: ".env");
     
     // Catch Flutter Errors (Layout, Rendering, etc.)
     FlutterError.onError = (FlutterErrorDetails details) {
