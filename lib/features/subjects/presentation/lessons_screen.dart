@@ -5,7 +5,6 @@ import '../../../../core/constants/app_routes.dart';
 import '../data/content_model.dart';
 import '../data/subject_model.dart';
 import '../subjects_controller.dart';
-import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_form_field.dart';
 import '../../../../shared/widgets/auto_direction.dart';
 import '../../../../shared/widgets/app_dialog.dart';
@@ -57,8 +56,11 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AppDialog(
         title: existingLesson == null ? 'Add Lesson Folder' : 'Edit Folder',
+        controller: _controller,
+        loadingText: 'Saving...',
         content: Form(
           key: formKey,
           child: AppFormField(
@@ -86,6 +88,12 @@ class _LessonsScreenState extends State<LessonsScreen> {
           
           if (!context.mounted) return;
           if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(existingLesson == null ? 'Lesson added successfully' : 'Lesson updated successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
             Navigator.pop(context);
           } else {
              if (_controller.hasError && !_controller.hasValidationErrors) {
@@ -103,15 +111,24 @@ class _LessonsScreenState extends State<LessonsScreen> {
     final subjectId = subject?.id ?? '0';
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AppDialog(
         title: 'Delete Folder',
         content: const Text('Are you sure? This will delete all videos inside.', 
             style: TextStyle(color: AppColors.textSecondary)),
+        controller: _controller,
         confirmText: 'Delete',
+        loadingText: 'Deleting...',
         onConfirm: () async {
           final success = await _controller.deleteLesson(lesson.id, subjectId);
           if (!context.mounted) return;
           if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Lesson deleted successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
             Navigator.pop(context);
           } else {
              if (_controller.hasError && !_controller.hasValidationErrors) {

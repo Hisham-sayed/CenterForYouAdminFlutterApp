@@ -6,6 +6,11 @@ import '../../core/services/token_storage.dart';
 import '../../core/architecture/base_controller.dart';
 
 class AuthController extends BaseController {
+  // Singleton pattern for consistent state across app
+  static final AuthController _instance = AuthController._internal();
+  factory AuthController() => _instance;
+  AuthController._internal();
+
   bool isAuthenticated = false;
   
   // User Data

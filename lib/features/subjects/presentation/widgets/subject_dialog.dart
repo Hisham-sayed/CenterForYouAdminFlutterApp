@@ -53,18 +53,16 @@ class _SubjectDialogState extends State<SubjectDialog> {
   Future<void> _handleSubmit() async {
     if (_formKey.currentState?.validate() != true) return;
     
-    // Controller handles loading state notification, but dialog creates a local loading UI?
-    // Actually BaseController has isLoading. We should use it?
-    // But SubjectDialog was cleaner managing its own simplistic loading.
-    // However, since we pass controller, we can use its loading state if desired, 
-    // OR just rely on the await.
-    // The issue is: if safeCall is used in parent, controller.isLoading becomes true.
-    // If we listen to controller (which AppFormField does), we might want to listen here too for button state.
-    
     // Call the provided onSave function
     final success = await widget.onSave(_titleController.text, _selectedImage);
       
     if (mounted && success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(widget.subject != null ? 'Subject updated successfully' : 'Subject added successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
       Navigator.of(context).pop();
     }
   }
@@ -164,13 +162,22 @@ class _SubjectDialogState extends State<SubjectDialog> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.black,
+                disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
+                disabledForegroundColor: Colors.black54,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               child: isLoading 
-                ? const SizedBox(
-                    width: 20, 
-                    height: 20, 
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black)
+                ? const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 16, 
+                        height: 16, 
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black54),
+                      ),
+                      SizedBox(width: 8),
+                      Text('Saving...'),
+                    ],
                   ) 
                 : const Text('Save'),
             ),

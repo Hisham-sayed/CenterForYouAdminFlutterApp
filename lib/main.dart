@@ -11,6 +11,7 @@ import 'features/subjects/presentation/exams_screen.dart';
 import 'features/subjects/presentation/lessons_screen.dart';
 import 'features/subjects/presentation/videos_screen.dart';
 import 'features/users/presentation/add_subject_to_user_screen.dart';
+import 'features/users/data/user_model.dart';
 import 'features/device_management/presentation/device_management_screen.dart';
 import 'features/graduation/presentation/graduation_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
@@ -91,18 +92,25 @@ class AdminApp extends StatelessWidget {
         AppRoutes.exams: (context) => const ExamsScreen(),
         AppRoutes.lessons: (context) => const LessonsScreen(),
         AppRoutes.videos: (context) => const VideosScreen(),
-        AppRoutes.addSubjectToUser: (context) => const AddSubjectToUserScreen(),
         AppRoutes.deviceManagement: (context) => const DeviceManagementScreen(),
         AppRoutes.graduation: (context) => const GraduationPartiesScreen(),
       },
       // Handle unknown routes/placeholders
       onGenerateRoute: (settings) {
-         return MaterialPageRoute(
-            builder: (context) => Scaffold(
-              appBar: AppBar(title: Text('Not Found')),
-               body: Center(child: Text('Route ${settings.name} not found')),
-            ),
-         );
+        // Handle addSubjectToUser with optional User argument
+        if (settings.name == AppRoutes.addSubjectToUser) {
+          final user = settings.arguments as User?;
+          return MaterialPageRoute(
+            builder: (context) => AddSubjectToUserScreen(initialUser: user),
+          );
+        }
+        // Handle unknown routes
+        return MaterialPageRoute(
+          builder: (context) => Scaffold(
+            appBar: AppBar(title: const Text('Not Found')),
+            body: Center(child: Text('Route ${settings.name} not found')),
+          ),
+        );
       },
     );
   }

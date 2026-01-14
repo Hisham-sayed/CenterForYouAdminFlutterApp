@@ -5,7 +5,6 @@ import '../../../../core/constants/app_colors.dart';
 import '../data/content_model.dart';
 import '../data/subject_model.dart';
 import '../subjects_controller.dart';
-import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_form_field.dart';
 import '../../../../shared/widgets/app_dialog.dart';
 
@@ -102,8 +101,11 @@ class _ExamsScreenState extends State<ExamsScreen> {
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AppDialog(
         title: existingExam == null ? 'Add Exam' : 'Edit Exam',
+        controller: _controller,
+        loadingText: 'Saving...',
         content: Form(
           key: formKey,
           child: Column(
@@ -139,6 +141,12 @@ class _ExamsScreenState extends State<ExamsScreen> {
           
           if (!context.mounted) return;
           if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(existingExam == null ? 'Exam added successfully' : 'Exam updated successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
             Navigator.pop(context);
           } else {
              if (_controller.hasError && !_controller.hasValidationErrors) {
@@ -156,14 +164,23 @@ class _ExamsScreenState extends State<ExamsScreen> {
     final subjectId = subject?.id ?? '0';
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AppDialog(
         title: 'Delete Exam',
         content: const Text('Are you sure?', style: TextStyle(color: AppColors.textSecondary)),
+        controller: _controller,
         confirmText: 'Delete',
+        loadingText: 'Deleting...',
         onConfirm: () async {
           final success = await _controller.deleteExam(exam.id, subjectId);
           if (!context.mounted) return;
           if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Exam deleted successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
              Navigator.pop(context);
           } else {
              if (_controller.hasError) {

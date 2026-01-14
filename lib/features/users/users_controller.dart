@@ -48,14 +48,14 @@ class UsersController extends BaseController {
     });
   }
 
-  Future<bool> updateDeviceId(String email, String newDeviceId) async {
+  Future<bool> resetDeviceId(String email) async {
     return await safeCall(() async {
       final response = await ApiService().put(
-        '/change-user-deviceId',
-        body: { 'email': email, 'newDeviceId': newDeviceId }
+        '/reset-user-deviceId',
+        body: { 'email': email }
       );
        if (response == null || response['isSuccess'] != true) {
-        throw Exception(response?['message'] ?? 'Failed to update device ID');
+        throw Exception(response?['message'] ?? 'Failed to reset device ID');
       }
     });
   }

@@ -16,28 +16,27 @@ class DeviceManagementScreen extends StatefulWidget {
 class _DeviceManagementScreenState extends State<DeviceManagementScreen> {
   final UsersController _controller = UsersController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _udidController = TextEditingController();
-  void _updateDevice() async {
-    if (_emailController.text.isEmpty || _udidController.text.isEmpty) {
+  
+  void _resetDevice() async {
+    if (_emailController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
+        const SnackBar(content: Text('Please enter user email')),
       );
       return;
     }
 
     // Controller handles loading state
-    final success = await _controller.updateDeviceId(_emailController.text.trim(), _udidController.text.trim());
+    final success = await _controller.resetDeviceId(_emailController.text.trim());
     
     if (mounted) {
        if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Device ID Updated Successfully')),
+            const SnackBar(content: Text('Device ID Reset Successfully')),
           );
           _emailController.clear();
-          _udidController.clear();
        } else if (_controller.hasError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(_controller.errorMessage ?? 'Failed to update Device ID')),
+            SnackBar(content: Text(_controller.errorMessage ?? 'Failed to reset Device ID')),
           );
        }
     }
@@ -85,22 +84,6 @@ class _DeviceManagementScreenState extends State<DeviceManagementScreen> {
                       prefixIcon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
                     ),
-                    const SizedBox(height: 16),
-                     const Text(
-                      'New Device ID (UDID)',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    AppFormField(
-                      controller: _controller,
-                      fieldName: 'deviceId', // Logical field name
-                      textEditingController: _udidController,
-                      hintText: 'Enter new UDID',
-                      prefixIcon: Icons.smartphone,
-                    ),
                         const SizedBox(height: 24),
                         Container(
                           padding: const EdgeInsets.all(12),
@@ -115,7 +98,7 @@ class _DeviceManagementScreenState extends State<DeviceManagementScreen> {
                               SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'Device IDs are securely hashed. Resetting will allow the user to login from a new device.',
+                                  'Resetting will clear the current device binding and allow the user to login from a new device.',
                                   style: TextStyle(color: Colors.white70, fontSize: 13),
                                 ),
                               ),
@@ -126,9 +109,9 @@ class _DeviceManagementScreenState extends State<DeviceManagementScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: PrimaryButton(
-                            text: 'Update Device ID',
+                            text: 'Reset Device ID',
                             isLoading: _controller.isLoading,
-                            onPressed: _updateDevice,
+                            onPressed: _resetDevice,
                           ),
                         ),
                       ],

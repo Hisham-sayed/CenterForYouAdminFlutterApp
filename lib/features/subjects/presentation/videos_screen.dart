@@ -5,7 +5,6 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../shared/screens/secure_video_player_screen.dart';
 import '../data/content_model.dart';
 import '../subjects_controller.dart';
-import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_form_field.dart';
 import '../../../../shared/widgets/app_dialog.dart';
 
@@ -64,8 +63,11 @@ class _VideosScreenState extends State<VideosScreen> {
     
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AppDialog(
         title: existingVideo == null ? 'Add Video' : 'Edit Video',
+        controller: _controller,
+        loadingText: 'Saving...',
         content: Form(
           key: formKey,
           child: Column(
@@ -101,6 +103,12 @@ class _VideosScreenState extends State<VideosScreen> {
           
           if (!context.mounted) return;
           if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(existingVideo == null ? 'Video added successfully' : 'Video updated successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
             Navigator.pop(context);
           } else {
              if (_controller.hasError && !_controller.hasValidationErrors) {
@@ -118,14 +126,23 @@ class _VideosScreenState extends State<VideosScreen> {
     final lessonId = lesson?.id ?? '0';
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AppDialog(
         title: 'Delete Video',
         content: const Text('Are you sure?', style: TextStyle(color: AppColors.textSecondary)),
+        controller: _controller,
         confirmText: 'Delete',
+        loadingText: 'Deleting...',
         onConfirm: () async {
           final success = await _controller.deleteVideo(video.id, lessonId);
           if (!context.mounted) return;
           if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Video deleted successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
             Navigator.pop(context);
           } else {
              if (_controller.hasError) {

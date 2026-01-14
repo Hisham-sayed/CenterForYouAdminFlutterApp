@@ -10,7 +10,9 @@ import '../../subjects/data/subject_model.dart';
 import '../../years_terms/data/year_model.dart';
 
 class AddSubjectToUserScreen extends StatefulWidget {
-  const AddSubjectToUserScreen({super.key});
+  final User? initialUser;
+  
+  const AddSubjectToUserScreen({super.key, this.initialUser});
 
   @override
   State<AddSubjectToUserScreen> createState() => _AddSubjectToUserScreenState();
@@ -34,7 +36,14 @@ class _AddSubjectToUserScreenState extends State<AddSubjectToUserScreen> {
   @override
   void initState() {
     super.initState();
-    // Categories are loaded in constructor of SubjectsController, but we can trigger refresh if needed
+    // If user is provided, pre-fill email and fetch complete user data
+    if (widget.initialUser != null) {
+      _emailController.text = widget.initialUser!.email;
+      // Auto-trigger check user to get complete enrollment data
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkUser();
+      });
+    }
   }
 
   Future<void> _checkUser() async {

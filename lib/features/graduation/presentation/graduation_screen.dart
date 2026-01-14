@@ -31,8 +31,11 @@ class _GraduationPartiesScreenState extends State<GraduationPartiesScreen> {
     
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AppDialog(
         title: isEditing ? 'Edit Graduation Party' : 'Add Graduation Party',
+        controller: _controller,
+        loadingText: 'Saving...',
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -66,6 +69,12 @@ class _GraduationPartiesScreenState extends State<GraduationPartiesScreen> {
              
             if (!context.mounted) return;
             if (success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(isEditing ? 'Video updated successfully' : 'Video added successfully'),
+                  backgroundColor: Colors.green,
+                ),
+              );
               Navigator.pop(context);
             } else {
                // Only show SnackBar for generic errors (non-validation)
@@ -85,14 +94,23 @@ class _GraduationPartiesScreenState extends State<GraduationPartiesScreen> {
   void _deleteVideo(GraduationVideo video) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AppDialog(
         title: 'Delete Party',
         content: const Text('Are you sure you want to delete this video?', style: TextStyle(color: AppColors.textSecondary)),
+        controller: _controller,
         confirmText: 'Delete',
+        loadingText: 'Deleting...',
         onConfirm: () async {
           final success = await _controller.deleteVideo(video.id);
           if (!context.mounted) return;
           if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Video deleted successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
             Navigator.pop(context);
           } else {
              if (_controller.hasError && !_controller.hasValidationErrors) {
@@ -154,19 +172,24 @@ class _GraduationPartiesScreenState extends State<GraduationPartiesScreen> {
                      Container(
                        height: 200, // Fixed height for media preview is standard
                        width: double.infinity,
-                       color: AppColors.surfaceHighlight,
-                       child: Stack( // Stack for overlay on image
-                         fit: StackFit.expand,
-                         children: [
-                           Center(
-                            child: Icon(
-                              Icons.movie_creation_outlined,
-                              size: 64,
-                              color: AppColors.textSecondary.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          // Optional: Real image here if available
-                         ],
+                       decoration: const BoxDecoration(
+                         image: DecorationImage(
+                           image: AssetImage('assets/images/graduation_party_bg.png'),
+                           fit: BoxFit.cover,
+                         ),
+                       ),
+                       child: Container(
+                         // Subtle dark overlay for better text contrast if needed
+                         decoration: BoxDecoration(
+                           gradient: LinearGradient(
+                             begin: Alignment.topCenter,
+                             end: Alignment.bottomCenter,
+                             colors: [
+                               Colors.transparent,
+                               Colors.black.withValues(alpha: 0.3),
+                             ],
+                           ),
+                         ),
                        ),
                      ),
                      

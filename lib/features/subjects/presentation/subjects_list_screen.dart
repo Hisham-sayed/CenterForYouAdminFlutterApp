@@ -8,6 +8,7 @@ import '../subjects_controller.dart';
 import '../../../../shared/widgets/app_network_image.dart';
 import '../../../../shared/widgets/error_snackbar.dart';
 import '../../../../shared/widgets/auto_direction.dart';
+import '../../../../shared/widgets/app_dialog.dart';
 
 class SubjectsListScreen extends StatefulWidget {
   const SubjectsListScreen({super.key});
@@ -100,33 +101,33 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
     
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Delete Subject', style: TextStyle(color: AppColors.textPrimary)),
+      barrierDismissible: false,
+      builder: (context) => AppDialog(
+        title: 'Delete Subject',
         content: const Text('Are you sure you want to delete this subject?', 
             style: TextStyle(color: AppColors.textSecondary)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () async {
-              final success = await _controller.deleteSubject(subject.id, termId);
-              if (!context.mounted) return;
-              if (success) {
-                Navigator.pop(context);
-              } else {
-                 if (_controller.hasError && !_controller.hasValidationErrors) {
-                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(_controller.errorMessage ?? 'Failed to delete subject.')),
-                   );
-                 }
-              }
-            },
-            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
+        controller: _controller,
+        confirmText: 'Delete',
+        loadingText: 'Deleting...',
+        onConfirm: () async {
+          final success = await _controller.deleteSubject(subject.id, termId);
+          if (!context.mounted) return;
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Subject deleted successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pop(context);
+          } else {
+             if (_controller.hasError && !_controller.hasValidationErrors) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(_controller.errorMessage ?? 'Failed to delete subject.')),
+               );
+             }
+          }
+        },
       ),
     );
   }

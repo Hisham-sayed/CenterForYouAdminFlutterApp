@@ -8,6 +8,8 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/info_row.dart';
+import '../../../../shared/widgets/app_dialog.dart';
+import '../../../../core/constants/app_routes.dart';
 
 class UsersListScreen extends StatefulWidget {
   const UsersListScreen({super.key});
@@ -180,38 +182,81 @@ class _UsersListScreenState extends State<UsersListScreen> {
                                   ),
                                   const SizedBox(height: 16),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
-                                      OutlinedButton.icon(
-                                        onPressed: () async {
-                                          // Confirm dialog
-                                          final confirm = await showDialog<bool>(
-                                            context: context,
-                                            builder: (ctx) => AlertDialog(
-                                              title: const Text('Remove All Subjects'),
-                                              content: Text('Are you sure you want to remove all subjects for ${user.name}?'),
-                                              actions: [
-                                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                                TextButton(
-                                                  onPressed: () => Navigator.pop(ctx, true), 
-                                                  child: const Text('Remove', style: TextStyle(color: AppColors.error)),
-                                                ),
-                                              ],
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          onPressed: () {
+                                            Navigator.pushNamed(
+                                              context,
+                                              AppRoutes.addSubjectToUser,
+                                              arguments: user,
+                                            );
+                                          },
+                                          icon: const Icon(Icons.add_circle_outline, color: AppColors.primary, size: 18),
+                                          label: const Text(
+                                            'Add Subjects',
+                                            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
+                                          ),
+                                          style: OutlinedButton.styleFrom(
+                                            side: const BorderSide(color: AppColors.primary, width: 1.5),
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(25),
                                             ),
-                                          );
-
-                                          if (confirm == true) {
-                                            await _controller.deleteAllSubjects(user.id);
-                                            setState(() {}); // Rebuild to show updated status
-                                          }
-                                        },
-                                        icon: const Icon(Icons.delete_sweep, color: AppColors.error),
-                                        label: const Text(
-                                          'Remove all subjects',
-                                          style: TextStyle(color: AppColors.error),
+                                          ),
                                         ),
-                                        style: OutlinedButton.styleFrom(
-                                          side: const BorderSide(color: AppColors.error),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          onPressed: () {
+                                            // Confirm dialog with loading state
+                                            showDialog(
+                                              context: context,
+                                              barrierDismissible: false,
+                                              builder: (ctx) => AppDialog(
+                                                title: 'Remove All Subjects',
+                                                content: Text(
+                                                  'Are you sure you want to remove all subjects for ${user.name}?',
+                                                  style: const TextStyle(color: AppColors.textSecondary),
+                                                ),
+                                                controller: _controller,
+                                                confirmText: 'Remove',
+                                                loadingText: 'Removing...',
+                                                onConfirm: () async {
+                                                  final success = await _controller.deleteAllSubjects(user.id);
+                                                  if (!ctx.mounted) return;
+                                                  if (success) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(
+                                                        content: Text('All subjects removed successfully'),
+                                                        backgroundColor: Colors.green,
+                                                      ),
+                                                    );
+                                                    Navigator.pop(ctx);
+                                                  } else {
+                                                    if (_controller.hasError) {
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(content: Text(_controller.errorMessage ?? 'Failed to remove subjects')),
+                                                      );
+                                                    }
+                                                  }
+                                                },
+                                              ),
+                                            );
+                                          },
+                                          icon: const Icon(Icons.delete_sweep, color: AppColors.error, size: 18),
+                                          label: const Text(
+                                            'Remove All',
+                                            style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600),
+                                          ),
+                                          style: OutlinedButton.styleFrom(
+                                            side: const BorderSide(color: AppColors.error, width: 1.5),
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(25),
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ],
