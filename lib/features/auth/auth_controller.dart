@@ -27,13 +27,35 @@ class AuthController extends BaseController {
       if (response != null && response['isSuccess'] == true && response['hasData'] == true) {
         final data = response['data'];
         final token = data['token'];
-        final refreshToken = data['refreshToken']; // Ensure this key matches API
+        final refreshToken = data['refreshToken']; 
+        // Handle potential backend typo "expirseIn"
+        final expiresInSeconds = data['expiresIn'] ?? data['expirseIn'];
+        final refreshTokenExpirationStr = data['refreshTokenExpiration'];
         
         // Store Token in ApiService
         ApiService().setToken(token);
         
-        // Persist Tokens
-        await TokenStorage().saveTokens(accessToken: token, refreshToken: refreshToken ?? '');
+        // Persist Tokens with Expiration
+        if (token != null && refreshToken != null && expiresInSeconds != null && refreshTokenExpirationStr != null) {
+           final now = DateTime.now();
+           final accessTokenExpiration = now.add(Duration(seconds: expiresInSeconds is int ? expiresInSeconds : int.parse(expiresInSeconds.toString())));
+           final refreshTokenExpiration = DateTime.parse(refreshTokenExpirationStr);
+
+           await TokenStorage().saveTokens(
+             accessToken: token, 
+             refreshToken: refreshToken,
+             accessTokenExpiration: accessTokenExpiration,
+             refreshTokenExpiration: refreshTokenExpiration,
+           );
+        } else {
+           // Fallback if backend response format is unexpected, though we strictly expect it based on prompt
+           // We might throw or log error, but for now we proceed (maybe without exp times tokens won't work proactively)
+           // But saveTokens NOW requires the dates. So we must provide something or fail.
+           // Let's assume response is correct as per spec. If not, safeCall catches generic exceptions.
+           if (expiresInSeconds == null || refreshTokenExpirationStr == null) {
+              throw const FormatException('Missing expiration data in login response');
+           }
+        }
         
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user_id', data['id'] ?? '');
@@ -47,55 +69,58 @@ class AuthController extends BaseController {
         isAuthenticated = true;
       } else {
         isAuthenticated = false;
-        // If ApiService didn't throw but returned failure (rare with current logic), throw manually to trigger error handler
         throw Exception(response != null ? response['message'] ?? 'Login failed' : 'Unknown error');
       }
     });
   }
 
+  /// Check if user session is valid.
+  /// Key principle: Session is valid as long as REFRESH TOKEN is valid.
+  /// Access token expiration does NOT mean logout.
   Future<bool> checkAuth() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final tokenStorage = TokenStorage();
       
-      // 1. Check for token existence
-      final token = await TokenStorage().getAccessToken();
-      if (token == null || token.isEmpty) {
-         return false;
+      // 1. Check Refresh Token Validity - This is the ONLY session indicator
+      final isRefreshTokenValid = await tokenStorage.isRefreshTokenValid();
+      if (!isRefreshTokenValid) {
+        debugPrint('AuthController: Refresh token expired or missing. Session invalid.');
+        // DO NOT call logout() here - per spec, AuthController must NOT trigger logout
+        // UI (SplashScreen) handles navigation to login when this returns false
+        // Tokens remain in storage but are expired - will be overwritten on next login
+        return false;
       }
       
-      // 2. Set token
-      ApiService().setToken(token);
-
-      // 3. Validate Token by calling a protected endpoint
-      // fetching dashboard stats is a cheap way to verify the token is valid
-      // If this throws 401, catch block will handle it
-      await ApiService().get('/admin-dashboard');
-
-      // 4. Update local state if successful
+      // 2. Load Access Token (may be expired, that's OK - ApiService will refresh it)
+      final token = await tokenStorage.getAccessToken();
+      if (token != null && token.isNotEmpty) {
+        ApiService().setToken(token);
+      }
+      
+      // 3. Restore User Data from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
       userId = prefs.getString('user_id');
       userName = prefs.getString('user_name');
       userEmail = prefs.getString('user_email');
-      isAuthenticated = true;
-      notifyListeners();
-      return true;
+      
+      // 4. If we have user data and valid refresh token, user is authenticated
+      // The first actual API call will handle access token refresh if needed
+      if (userId != null && userId!.isNotEmpty) {
+        isAuthenticated = true;
+        notifyListeners();
+        debugPrint('AuthController: Session restored. User: $userEmail');
+        return true;
+      }
+      
+      // No user data found (edge case - tokens exist but no user data)
+      debugPrint('AuthController: No user data found despite valid tokens.');
+      return false;
 
     } catch (e) {
-       // Handle Network Exception specifically: Assume valid if token exists but offline
-       if (e.toString().contains('NetworkException') || e.toString().contains('SocketException')) {
-          debugPrint('Auth Validation: Offline mode assumed.');
-          final prefs = await SharedPreferences.getInstance();
-          userId = prefs.getString('user_id');
-          userName = prefs.getString('user_name');
-          userEmail = prefs.getString('user_email');
-          isAuthenticated = true;
-          notifyListeners();
-          return true; // Return true to keep user logged in
-       }
-
-       // If any OTHER error (401, etc.), assume invalid session
-       debugPrint('Auth Validation Error: $e');
-       await logout(); // Clear everything
-       return false;
+      debugPrint('AuthController: checkAuth error: $e');
+      // On any error, assume we need to verify on next API call
+      // Do NOT logout here - let actual API usage determine session validity
+      return false;
     }
   }
 

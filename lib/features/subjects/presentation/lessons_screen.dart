@@ -53,18 +53,30 @@ class _LessonsScreenState extends State<LessonsScreen> {
   void _showAddEditDialog({Lesson? existingLesson, int? index}) {
     final TextEditingController textController = TextEditingController(text: existingLesson?.title);
     final subjectId = subject?.id ?? '0';
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
       builder: (context) => AppDialog(
         title: existingLesson == null ? 'Add Lesson Folder' : 'Edit Folder',
-        content: AppFormField(
-          controller: _controller,
-          fieldName: 'Title',
-          textEditingController: textController,
-          hintText: 'Folder Name',
+        content: Form(
+          key: formKey,
+          child: AppFormField(
+            controller: _controller,
+            fieldName: 'Title',
+            textEditingController: textController,
+            hintText: 'Folder Name',
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter a name';
+              }
+              return null;
+            },
+          ),
         ),
         onConfirm: () async {
+          if (!formKey.currentState!.validate()) return;
+          
           bool success = false;
           if (existingLesson == null) {
             success = await _controller.addLesson(subjectId, textController.text);

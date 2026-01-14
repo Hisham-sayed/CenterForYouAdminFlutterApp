@@ -11,6 +11,7 @@ class AppTextField extends StatefulWidget {
   final bool obscureText;
   final TextInputType? keyboardType;
   final String? errorText;
+  final String? Function(String?)? validator;
 
   const AppTextField({
     super.key,
@@ -21,6 +22,7 @@ class AppTextField extends StatefulWidget {
     this.obscureText = false,
     this.keyboardType,
     this.errorText,
+    this.validator,
   });
 
   @override
@@ -69,21 +71,36 @@ class _AppTextFieldState extends State<AppTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
       controller: widget.controller,
       onChanged: _handleChanged,
       obscureText: widget.obscureText,
       keyboardType: widget.keyboardType,
       textDirection: _textDirection,
-      // When RTL, we usually want text to align to the right side of the box?
-      // TextField with RTL textDirection automaticaly aligns to the 'start' (which is right).
-      // But let's verify visual appearance.
+      validator: widget.validator,
       style: const TextStyle(color: AppColors.textPrimary),
       decoration: InputDecoration(
         hintText: widget.hintText,
         prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon, color: AppColors.textSecondary) : null,
         errorText: widget.errorText, // Use the error text here
-        errorStyle: const TextStyle(color: AppColors.error), // Ensure standard red error color
+        errorStyle: const TextStyle(color: AppColors.error), 
+        hintStyle: const TextStyle(color: AppColors.textSecondary),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.textSecondary),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.primary),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.error),
+        ),
       ),
     );
   }

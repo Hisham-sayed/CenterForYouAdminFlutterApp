@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
-import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/error_snackbar.dart';
 import '../../../shared/widgets/app_form_field.dart';
@@ -18,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthController _authController = AuthController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   
   @override
   void initState() {
@@ -26,6 +26,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+    
     final success = await _authController.login(
       _emailController.text,
       _passwordController.text,
@@ -83,41 +85,54 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 48),
-                ListenableBuilder(
-                  listenable: _authController,
-                  builder: (context, _) {
-                    return Column(
-                       crossAxisAlignment: CrossAxisAlignment.start,
-                       children: [
-                         AppFormField(
-                            controller: _authController,
-                            fieldName: 'Email',
-                            textEditingController: _emailController,
-                            hintText: 'Email',
-                            prefixIcon: Icons.email_outlined,
-                         ),
-                       ],
-                    );
-                  }
-                ),
-                const SizedBox(height: 16),
-                ListenableBuilder(
-                  listenable: _authController,
-                  builder: (context, _) {
-                    return Column(
-                       crossAxisAlignment: CrossAxisAlignment.start,
-                       children: [
-                          AppFormField(
-                            controller: _authController,
-                            fieldName: 'Password',
-                            textEditingController: _passwordController,
-                            hintText: 'Password',
-                            prefixIcon: Icons.lock_outline,
-                            obscureText: true,
-                          ),
-                       ],
-                    );
-                   },
+                Form(
+                  key: _formKey,
+                  child: Column(
+                     crossAxisAlignment: CrossAxisAlignment.start,
+                     children: [
+                       ListenableBuilder(
+                         listenable: _authController,
+                         builder: (context, _) {
+                           return AppFormField(
+                              controller: _authController,
+                              fieldName: 'Email',
+                              textEditingController: _emailController,
+                              hintText: 'Email',
+                              prefixIcon: Icons.email_outlined,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your email';
+                                }
+                                if (!value.contains('@')) {
+                                  return 'Please enter a valid email';
+                                }
+                                return null;
+                              },
+                           );
+                         }
+                       ),
+                       const SizedBox(height: 16),
+                       ListenableBuilder(
+                         listenable: _authController,
+                         builder: (context, _) {
+                            return AppFormField(
+                              controller: _authController,
+                              fieldName: 'Password',
+                              textEditingController: _passwordController,
+                              hintText: 'Password',
+                              prefixIcon: Icons.lock_outline,
+                              obscureText: true,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your password';
+                                }
+                                return null;
+                              },
+                            );
+                          },
+                       ),
+                     ],
+                  ),
                 ),
                 const SizedBox(height: 32),
                 SizedBox(

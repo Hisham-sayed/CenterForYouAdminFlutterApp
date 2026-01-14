@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
-import '../../features/auth/auth_controller.dart';
 import '../../core/services/api_service.dart';
 import '../constants/app_routes.dart';
 import 'dart:async';
 
+/// AuthLifecycleGuard listens for session expiry events from ApiService.
+/// 
+/// Key Principle: Redirect to login ONLY when:
+/// - Refresh token is definitively rejected by backend (onUnauthorized event)
+/// - User explicitly logs out
+/// 
+/// DO NOT redirect on:
+/// - Access token expiration (handled by refresh)
+/// - Network errors
+/// - App resume (let actual API calls determine validity)
 class AuthLifecycleGuard extends StatefulWidget {
   final Widget child;
   final GlobalKey<NavigatorState> navigatorKey;
@@ -18,46 +27,31 @@ class AuthLifecycleGuard extends StatefulWidget {
   State<AuthLifecycleGuard> createState() => _AuthLifecycleGuardState();
 }
 
-class _AuthLifecycleGuardState extends State<AuthLifecycleGuard> with WidgetsBindingObserver {
+class _AuthLifecycleGuardState extends State<AuthLifecycleGuard> {
   StreamSubscription? _authSubscription;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     
-    // Listen for global 401 events
+    // Listen for global 401 events (only when refresh token is definitively rejected)
     _authSubscription = ApiService().onUnauthorized.listen((_) {
+      debugPrint('AuthLifecycleGuard: Received onUnauthorized. Redirecting to login.');
       _redirectToLogin();
     });
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _authSubscription?.cancel();
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _validateSession();
-    }
-  }
-
-  Future<void> _validateSession() async {
-    final auth = AuthController();
-    final isValid = await auth.checkAuth();
-    
-    if (!isValid) {
-        _redirectToLogin();
-    }
-  }
+  // REMOVED: didChangeAppLifecycleState / _validateSession
+  // Per spec: No background validation. Session validity is determined by actual API usage.
+  // If refresh token is expired, the first API call will trigger onUnauthorized.
 
   void _redirectToLogin() {
-    // Prevent duplicate navigations if already validating or on login
-    // For now simple pushReplacement is enough
     widget.navigatorKey.currentState?.pushNamedAndRemoveUntil(
       AppRoutes.login,
       (route) => false,

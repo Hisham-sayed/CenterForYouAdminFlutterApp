@@ -4,16 +4,9 @@ import '../data/subject_model.dart';
 import 'widgets/subject_dialog.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../shared/widgets/app_text_field.dart';
 import '../subjects_controller.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import '../../../../core/services/api_service.dart';
 import '../../../../shared/widgets/app_network_image.dart';
-
 import '../../../../shared/widgets/error_snackbar.dart';
-import '../../../../shared/widgets/inline_error_text.dart';
-import '../../../../shared/widgets/app_form_field.dart';
 import '../../../../shared/widgets/auto_direction.dart';
 
 class SubjectsListScreen extends StatefulWidget {
@@ -77,9 +70,10 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
 
     showDialog(
       context: context,
-      barrierDismissible: false, // Prevent accidental close while loading is implicit in dialog, but explicit property good too
+      barrierDismissible: false, 
       builder: (context) => SubjectDialog(
         subject: existingSubject,
+        controller: _controller,
         onSave: (title, image) async {
           bool success;
           if (existingSubject == null) {

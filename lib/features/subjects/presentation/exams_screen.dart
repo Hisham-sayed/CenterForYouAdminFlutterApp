@@ -98,37 +98,37 @@ class _ExamsScreenState extends State<ExamsScreen> {
     final TextEditingController textController = TextEditingController(text: existingExam?.title);
     final TextEditingController linkController = TextEditingController(text: existingExam?.link ?? '');
     final subjectId = subject?.id ?? '0';
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
       builder: (context) => AppDialog(
         title: existingExam == null ? 'Add Exam' : 'Edit Exam',
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppFormField(
-              controller: _controller,
-              fieldName: 'title',
-              textEditingController: textController,
-              hintText: 'Exam Title',
-            ),
-            const SizedBox(height: 12),
-            AppFormField(
-              controller: _controller,
-              fieldName: 'link', // Or 'Link' depending on API
-              textEditingController: linkController,
-              hintText: 'Exam Link (Required)',
-            ),
-          ],
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppFormField(
+                controller: _controller,
+                fieldName: 'title',
+                textEditingController: textController,
+                hintText: 'Exam Title',
+                validator: (value) => (value == null || value.trim().isEmpty) ? 'Please enter a title' : null,
+              ),
+              const SizedBox(height: 12),
+              AppFormField(
+                controller: _controller,
+                fieldName: 'link', 
+                textEditingController: linkController,
+                hintText: 'Exam Link (Required)',
+                validator: (value) => (value == null || value.trim().isEmpty) ? 'Please enter a link' : null,
+              ),
+            ],
+          ),
         ),
         onConfirm: () async {
-          // Manual validation removed; API handles it.
-          // But for UX, we might still want to prevent completely empty submissions if desired.
-          // For now, let's rely on server or at least keeping non-empty check if strictly needed for client-side valid.
-          // However, standard is to let server invalid response trigger fields.
-          // Let's keep simple client check just for empty to avoid useless api calls, 
-          // OR remove it to fully test standard validation.
-          // Plan said "Remove manual validation", so I will remove the snackbar check.
+          if (!formKey.currentState!.validate()) return;
 
           bool success = false;
           if (existingExam == null) {
@@ -141,7 +141,6 @@ class _ExamsScreenState extends State<ExamsScreen> {
           if (success) {
             Navigator.pop(context);
           } else {
-             // Only generic errors
              if (_controller.hasError && !_controller.hasValidationErrors) {
                ScaffoldMessenger.of(context).showSnackBar(
                  SnackBar(content: Text(_controller.errorMessage ?? 'An error occurred')),

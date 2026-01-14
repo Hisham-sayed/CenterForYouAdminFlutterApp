@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../users_controller.dart';
-import '../data/user_model.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../../shared/widgets/app_card.dart';
@@ -148,10 +148,74 @@ class _UsersListScreenState extends State<UsersListScreen> {
                               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                               child: Column(
                                 children: [
-                                  Divider(color: Colors.white.withValues(alpha: 0.1)),
-                                  InfoRow(icon: Icons.email_outlined, label: 'Email', value: user.email),
+                                  Divider(color: Colors.grey.withValues(alpha: 0.1)),
+                                  InfoRow(
+                                    icon: Icons.email_outlined, 
+                                    label: 'Email', 
+                                    value: user.email,
+                                    onTap: () {
+                                      Clipboard.setData(ClipboardData(text: user.email));
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Email copied to clipboard'),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                   const SizedBox(height: 12),
-                                  InfoRow(icon: Icons.phone_outlined, label: 'Phone', value: user.phoneNumber ?? 'N/A'),
+                                  InfoRow(
+                                    icon: Icons.phone_outlined, 
+                                    label: 'Phone', 
+                                    value: user.phoneNumber ?? 'N/A',
+                                    onTap: user.phoneNumber != null ? () {
+                                      Clipboard.setData(ClipboardData(text: user.phoneNumber!));
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Phone number copied to clipboard'),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    } : null,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      OutlinedButton.icon(
+                                        onPressed: () async {
+                                          // Confirm dialog
+                                          final confirm = await showDialog<bool>(
+                                            context: context,
+                                            builder: (ctx) => AlertDialog(
+                                              title: const Text('Remove All Subjects'),
+                                              content: Text('Are you sure you want to remove all subjects for ${user.name}?'),
+                                              actions: [
+                                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(ctx, true), 
+                                                  child: const Text('Remove', style: TextStyle(color: AppColors.error)),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+
+                                          if (confirm == true) {
+                                            await _controller.deleteAllSubjects(user.id);
+                                            setState(() {}); // Rebuild to show updated status
+                                          }
+                                        },
+                                        icon: const Icon(Icons.delete_sweep, color: AppColors.error),
+                                        label: const Text(
+                                          'Remove all subjects',
+                                          style: TextStyle(color: AppColors.error),
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          side: const BorderSide(color: AppColors.error),
+                                        ),
+                                      ),
+                                    ],
+                                  )
                                 ],
                               ),
                             ),

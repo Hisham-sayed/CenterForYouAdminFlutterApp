@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/architecture/base_controller.dart';
 import 'app_text_field.dart';
-import 'inline_error_text.dart';
 
 class AppFormField extends StatelessWidget {
   final BaseController controller;
@@ -11,6 +10,7 @@ class AppFormField extends StatelessWidget {
   final IconData? prefixIcon;
   final bool obscureText;
   final TextInputType? keyboardType;
+  final String? Function(String?)? validator;
 
   const AppFormField({
     super.key,
@@ -21,6 +21,7 @@ class AppFormField extends StatelessWidget {
     this.prefixIcon,
     this.obscureText = false,
     this.keyboardType,
+    this.validator,
   });
 
   @override
@@ -30,16 +31,14 @@ class AppFormField extends StatelessWidget {
       builder: (context, _) {
         final error = controller.getFieldError(fieldName);
        
-        // We pass the error text directly to the text field if it supports it, 
-        // or keep using InlineErrorText if AppTextField doesn't expose errorText.
-        // Let's check AppTextField first.
         return AppTextField(
           controller: textEditingController,
           hintText: hintText,
           prefixIcon: prefixIcon,
           obscureText: obscureText,
           keyboardType: keyboardType,
-          errorText: error, // Passing error text directly
+          errorText: error, 
+          validator: validator,
         );
       },
     );

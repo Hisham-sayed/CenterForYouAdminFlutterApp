@@ -2,11 +2,12 @@ class User {
   final String id;
   final String name;
   final String email;
-  final String? avatarUrl; // Optional
+  final String? avatarUrl; 
   final String? phoneNumber;
-  final String role; // e.g., 'Student'
+  final String role; 
   final bool hasEnrolledSubjects;
   final List<int> enrolledSubjectIds;
+  final String? lockoutEnd; // Helper for blocking
 
   const User({
     required this.id,
@@ -17,8 +18,19 @@ class User {
     this.role = 'Student',
     this.hasEnrolledSubjects = false,
     this.enrolledSubjectIds = const [],
+    this.lockoutEnd,
   });
   
+  bool get isBlocked {
+    if (lockoutEnd == null) return false;
+    try {
+      final end = DateTime.parse(lockoutEnd!);
+      return end.isAfter(DateTime.now());
+    } catch (_) {
+      return false;
+    }
+  }
+
   // Helper for initials
   String get initials {
     if (name.isEmpty) return '';
@@ -36,11 +48,12 @@ class User {
       email: json['email'] ?? '',
       phoneNumber: json['phoneNumber'],
       role: json['role'] ?? 'Student',
-      avatarUrl: json['avatarUrl'], // nullable
+      avatarUrl: json['avatarUrl'], 
       hasEnrolledSubjects: json['hasEnrolledSubjects'] ?? false,
       enrolledSubjectIds: json['enrolledSubjectIds'] != null 
           ? List<int>.from(json['enrolledSubjectIds']) 
           : const [],
+      lockoutEnd: json['lockoutEnd'],
     );
   }
 }

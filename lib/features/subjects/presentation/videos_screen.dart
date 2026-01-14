@@ -60,30 +60,38 @@ class _VideosScreenState extends State<VideosScreen> {
     final TextEditingController titleController = TextEditingController(text: existingVideo?.title);
     final TextEditingController urlController = TextEditingController(text: existingVideo?.url);
     final lessonId = lesson?.id ?? '0';
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
     
     showDialog(
       context: context,
       builder: (context) => AppDialog(
         title: existingVideo == null ? 'Add Video' : 'Edit Video',
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppFormField(
-              controller: _controller,
-              fieldName: 'title',
-              textEditingController: titleController,
-              hintText: 'Video Title',
-            ),
-            const SizedBox(height: 12),
-            AppFormField(
-              controller: _controller,
-              fieldName: 'url',
-              textEditingController: urlController,
-              hintText: 'Video URL (YouTube/Vimeo)',
-            ),
-          ],
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppFormField(
+                controller: _controller,
+                fieldName: 'title',
+                textEditingController: titleController,
+                hintText: 'Video Title',
+                validator: (value) => (value == null || value.trim().isEmpty) ? 'Please enter a title' : null,
+              ),
+              const SizedBox(height: 12),
+              AppFormField(
+                controller: _controller,
+                fieldName: 'url',
+                textEditingController: urlController,
+                hintText: 'Video URL (YouTube/Vimeo)',
+                validator: (value) => (value == null || value.trim().isEmpty) ? 'Please enter a URL' : null,
+              ),
+            ],
+          ),
         ),
         onConfirm: () async {
+          if (!formKey.currentState!.validate()) return;
+
           bool success = false;
           if (existingVideo == null) {
             success = await _controller.addVideo(lessonId, titleController.text, urlController.text);

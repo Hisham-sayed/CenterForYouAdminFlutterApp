@@ -8,6 +8,33 @@ import 'token_storage.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+/// Central network layer that handles all API communication.
+/// 
+/// ## Authentication Lifecycle (Production-Grade)
+/// 
+/// **Golden Rule:** Access token expiration is a network concern, not a session concern.
+/// Session validity belongs to the refresh token ONLY.
+/// 
+/// ### Key Principles:
+/// - **Access Token:** Short-lived, used only to authorize API requests. Expiration does NOT end user session.
+/// - **Refresh Token:** Long-lived, sole authority of session validity. Session ends ONLY if:
+///   1. Refresh token expires
+///   2. Refresh token is rejected by backend (emits [onUnauthorized])
+///   3. User explicitly logs out
+/// 
+/// ### This class is the ONLY authority that can end a session.
+/// UI, controllers, and app lifecycle events must NEVER trigger logout.
+/// 
+/// ### Token Refresh Strategy:
+/// - Refresh happens ONLY when an authenticated API request is made
+/// - Triggered by HTTP 401 or local expiration check
+/// - NO timers, NO background jobs, NO app startup/resume refresh
+/// - No request → No refresh → No logout
+/// 
+/// ### Network Errors:
+/// - NEVER invalidate tokens on network failure
+/// - NEVER trigger logout on SocketException, Timeout, etc.
+/// - User stays logged in until refresh token is definitively rejected by backend
 class ApiService {
   static final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'https://center-for-you.runasp.net';
   
@@ -38,34 +65,56 @@ class ApiService {
   }
 
   /// Internal helper to perform requests with retry logic
+  /// Key principle: Access Token Expiration ≠ Logout
+  /// Logout ONLY when refresh token is definitively invalid (backend rejects it)
   Future<dynamic> _performRequest(Future<http.Response> Function() requestCall) async {
+    // 1. Proactive Token Refresh (Optional Optimization - NO LOGOUT)
+    // If we know access token is expired, try refresh first to avoid a 401 round-trip
+    // But if refresh fails here, we just proceed with the request (let 401 handle it)
+    if (_accessToken != null && _accessToken!.isNotEmpty) {
+      final isTokenValid = await TokenStorage().isAccessTokenValid();
+      if (!isTokenValid) {
+        debugPrint('ApiService: Access token expired. Attempting proactive refresh...');
+        try {
+          await _tryRefreshToken();
+          // If refresh succeeds, great! If it fails, we just proceed.
+        } catch (e) {
+          // If network error during proactive refresh, just proceed with request
+          // The request itself will fail with NetworkException if offline
+          debugPrint('ApiService: Proactive refresh failed (will proceed): $e');
+        }
+      }
+    }
+
+    // 2. Perform Request
     try {
       final response = await requestCall().timeout(const Duration(seconds: 30));
       return _handleResponse(response);
     } on ServerException catch (e) {
       if (e.statusCode == 401) {
-        // Attempt Refresh
+        debugPrint('ApiService: 401 received. Attempting refresh...');
+        // Attempt Refresh on 401
         try {
           final refreshed = await _tryRefreshToken();
           if (refreshed) {
-             // Retry original request with new token
-             try {
-               final retryResponse = await requestCall().timeout(const Duration(seconds: 30));
-               return _handleResponse(retryResponse);
-             } catch (retryError) {
-               rethrow;
-             }
+            // Retry original request with new token
+            debugPrint('ApiService: Retrying request after successful refresh...');
+            final retryResponse = await requestCall().timeout(const Duration(seconds: 30));
+            return _handleResponse(retryResponse);
           } else {
-             // Refresh failed (invalid token), notify unauthorized
-             _unauthorizedController.add(null);
-             rethrow; 
+            // Refresh failed because backend rejected refresh token (session truly expired)
+            debugPrint('ApiService: Refresh token rejected. Session expired.');
+            _unauthorizedController.add(null);
+            rethrow;
           }
         } on SocketException {
-           // Network error during refresh -> Return "No connection" instead of logout
-           throw NetworkException();
+          // Network error during refresh -> NOT a logout, just network issue
+          debugPrint('ApiService: Network error during refresh. NOT logging out.');
+          throw NetworkException();
         } on TimeoutException {
-           // Timeout during refresh -> Return "Timeout" instead of logout
-           throw NetworkException('Request timed out');
+          // Timeout during refresh -> NOT a logout, just network issue
+          debugPrint('ApiService: Timeout during refresh. NOT logging out.');
+          throw NetworkException('Request timed out');
         }
       }
       rethrow;
@@ -83,18 +132,14 @@ class ApiService {
     try {
       final tokenStorage = TokenStorage();
       final currentRefreshToken = await tokenStorage.getRefreshToken();
-      final currentAccessToken = await tokenStorage.getAccessToken(); // Or use _accessToken
+      final currentAccessToken = await tokenStorage.getAccessToken(); 
 
       if (currentRefreshToken == null || currentAccessToken == null) {
         return false;
       }
 
-      // We explicitly use a fresh client or just standard headers excluding the old auth?
-      // Actually usually refresh endpoint doesn't need Bearer token sometimes, OR it needs it.
-      // The prompt usage implies sending them in body.
-      // We should NOT use _performRequest here to avoid infinite loops.
-      
       final uri = Uri.parse('$baseUrl/auth/refresh-token');
+      debugPrint('ApiService: Refreshing token...');
       final response = await _client.post(
         uri,
         headers: {'Content-Type': 'application/json'},
@@ -110,21 +155,37 @@ class ApiService {
            final data = body['data'];
            final newAccess = data['token'];
            final newRefresh = data['refreshToken'];
-           
-           if (newAccess != null && newRefresh != null) {
+           // Handle potential backend typo "expirseIn"
+           final expiresInSeconds = data['expiresIn'] ?? data['expirseIn']; 
+           final refreshTokenExpirationStr = data['refreshTokenExpiration'];
+
+           if (newAccess != null && newRefresh != null && expiresInSeconds != null && refreshTokenExpirationStr != null) {
+             // Calculate Expirations
+             final now = DateTime.now();
+             // expiresIn is in seconds usually.
+             final accessTokenExpiration = now.add(Duration(seconds: expiresInSeconds is int ? expiresInSeconds : int.parse(expiresInSeconds.toString())));
+             final refreshTokenExpiration = DateTime.parse(refreshTokenExpirationStr);
+
              // Update local state
              setToken(newAccess);
              // Update storage
-             await tokenStorage.saveTokens(accessToken: newAccess, refreshToken: newRefresh);
+             await tokenStorage.saveTokens(
+               accessToken: newAccess, 
+               refreshToken: newRefresh,
+               accessTokenExpiration: accessTokenExpiration,
+               refreshTokenExpiration: refreshTokenExpiration,
+             );
+             debugPrint('ApiService: Token refreshed successfully.');
              return true;
            }
         }
       }
+      debugPrint('ApiService: Refresh failed with status ${response.statusCode}');
       return false;
     } on SocketException {
-      rethrow; // Important: Propagate network error
+      rethrow; 
     } on TimeoutException {
-      rethrow; // Important: Propagate timeout
+      rethrow; 
     } catch (e) {
       debugPrint('Token Refresh Failed: $e');
       return false;
@@ -143,13 +204,15 @@ class ApiService {
   // POST Request
   Future<dynamic> post(String endpoint, {dynamic body}) async {
     final uri = Uri.parse('$baseUrl$endpoint');
-    // Special check: Login shouldn't auto-refresh if it fails with 401 (invalid credentials)
-    // But login usually returns 400 or 401 for bad params. 
-    // Generally standard "refresh" logic only applies if we *thought* we were logged in.
     
-    // However, simplistic wrapper is fine for now. 
-    // If login endpoint returns 401, it means bad creds. 
-    // _tryRefreshToken will likely fail or be skipped if we don't have tokens yet.
+    // Check if we are logging in (skip proactive refresh)
+    if (endpoint.contains('/login') || endpoint.contains('/refresh-token')) {
+       return _performBasicRequest(() => _client.post(
+          uri, 
+          headers: _headers,
+          body: body != null ? json.encode(body) : null,
+      ));
+    }
     
     return _performRequest(() => _client.post(
         uri, 
@@ -208,6 +271,21 @@ class ApiService {
     return _multipartRequest('PUT', endpoint, fields, file: file, fileField: fileField);
   }
 
+  /// Basic request wrapper for internal use (Login/Refresh) that bypasses proactive checks
+  Future<dynamic> _performBasicRequest(Future<http.Response> Function() requestCall) async {
+      try {
+        final response = await requestCall().timeout(const Duration(seconds: 30));
+        return _handleResponse(response);
+      } on SocketException {
+        throw NetworkException();
+      } on TimeoutException {
+        throw NetworkException('Request timed out');
+      } catch (e) {
+        if (e is ServerException || e is NetworkException) rethrow;
+        throw NetworkException(e.toString());
+      }
+  }
+
   dynamic _handleResponse(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (response.body.isEmpty) return null;
@@ -220,8 +298,6 @@ class ApiService {
         errorData = response.body;
       }
       
-      // We throw a specific ServerException with statusCode
-      // The _performRequest wrapper catches this specific one to check for 401
       throw ServerException(
         statusCode: response.statusCode,
         responseData: errorData,

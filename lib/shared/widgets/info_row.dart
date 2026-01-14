@@ -6,6 +6,7 @@ class InfoRow extends StatelessWidget {
   final String label;
   final String value;
   final Color? iconColor;
+  final VoidCallback? onTap;
 
   const InfoRow({
     super.key,
@@ -13,19 +14,23 @@ class InfoRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.iconColor,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceHighlight,
-            borderRadius: BorderRadius.circular(8),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceHighlight,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 20, color: iconColor ?? AppColors.primary),
           ),
-          child: Icon(icon, size: 20, color: iconColor ?? AppColors.primary),
         ),
         const SizedBox(width: 16),
         Expanded(
