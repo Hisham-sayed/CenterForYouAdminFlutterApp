@@ -42,9 +42,13 @@ dependencies:
   image_picker: ^1.2.1
   url_launcher: ^6.3.2
   youtube_player_flutter: ^9.0.1
-  shared_preferences: ^2.5.4
+  shared_preferences: ^2.4.18
   flutter_secure_storage: ^10.0.0
   flutter_dotenv: ^5.1.0
+  better_player:
+    git:
+      url: https://github.com/jhomlala/betterplayer.git
+      ref: master
 
 dev_dependencies:
   flutter_test:

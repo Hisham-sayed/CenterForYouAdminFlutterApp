@@ -12,6 +12,7 @@ class AppTextField extends StatefulWidget {
   final TextInputType? keyboardType;
   final String? errorText;
   final String? Function(String?)? validator;
+  final Widget? suffixIcon;
 
   const AppTextField({
     super.key,
@@ -23,6 +24,7 @@ class AppTextField extends StatefulWidget {
     this.keyboardType,
     this.errorText,
     this.validator,
+    this.suffixIcon,
   });
 
   @override
@@ -82,6 +84,7 @@ class _AppTextFieldState extends State<AppTextField> {
       decoration: InputDecoration(
         hintText: widget.hintText,
         prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon, color: AppColors.textSecondary) : null,
+        suffixIcon: widget.suffixIcon,
         errorText: widget.errorText, // Use the error text here
         errorStyle: const TextStyle(color: AppColors.error), 
         hintStyle: const TextStyle(color: AppColors.textSecondary),

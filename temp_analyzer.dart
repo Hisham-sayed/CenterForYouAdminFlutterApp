@@ -1,0 +1,1 @@
+import 'dart:io';void main() async {var r = await Process.run('dart', ['analyze', '--format=machine', 'lib/features/users/presentation/']); r.stdout.toString().split('\n').forEach((l) { var p = l.split('|'); if(p.length > 7) print(': - ');});}

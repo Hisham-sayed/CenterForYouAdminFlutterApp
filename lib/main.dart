@@ -11,6 +11,7 @@ import 'features/subjects/presentation/exams_screen.dart';
 import 'features/subjects/presentation/lessons_screen.dart';
 import 'features/subjects/presentation/videos_screen.dart';
 import 'features/users/presentation/add_subject_to_user_screen.dart';
+import 'features/users/presentation/add_edit_student_screen.dart';
 import 'features/users/data/user_model.dart';
 import 'features/device_management/presentation/device_management_screen.dart';
 import 'features/graduation/presentation/graduation_screen.dart';
@@ -102,6 +103,13 @@ class AdminApp extends StatelessWidget {
           final user = settings.arguments as User?;
           return MaterialPageRoute(
             builder: (context) => AddSubjectToUserScreen(initialUser: user),
+          );
+        }
+        // Handle addEditStudent with optional User argument
+        if (settings.name == AppRoutes.addEditStudent) {
+          final user = settings.arguments as User?;
+          return MaterialPageRoute(
+            builder: (context) => AddEditStudentScreen(student: user),
           );
         }
         // Handle unknown routes

@@ -1,0 +1,9 @@
+﻿ERROR|COMPILE_TIME_ERROR|UNDEFINED_NAMED_PARAMETER|D:\\CenterForYouAdmin\\lib\\features\\users\\presentation\\add_edit_student_screen.dart|115|17|9|The named parameter 'labelText' isn't defined.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_NAMED_PARAMETER|D:\\CenterForYouAdmin\\lib\\features\\users\\presentation\\add_edit_student_screen.dart|123|17|9|The named parameter 'labelText' isn't defined.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_NAMED_PARAMETER|D:\\CenterForYouAdmin\\lib\\features\\users\\presentation\\add_edit_student_screen.dart|136|17|9|The named parameter 'labelText' isn't defined.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_NAMED_PARAMETER|D:\\CenterForYouAdmin\\lib\\features\\users\\presentation\\add_edit_student_screen.dart|146|19|9|The named parameter 'labelText' isn't defined.
+ERROR|COMPILE_TIME_ERROR|MISSING_REQUIRED_ARGUMENT|D:\\CenterForYouAdmin\\lib\\features\\users\\presentation\\users_list_screen.dart|73|15|12|The named parameter 'hintText' is required, but there's no corresponding argument.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_NAMED_PARAMETER|D:\\CenterForYouAdmin\\lib\\features\\users\\presentation\\users_list_screen.dart|75|17|9|The named parameter 'labelText' isn't defined.
+INFO|LINT|USE_BUILD_CONTEXT_SYNCHRONOUSLY|D:\\CenterForYouAdmin\\lib\\features\\users\\presentation\\add_edit_student_screen.dart|86|28|7|Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check.
+INFO|LINT|USE_BUILD_CONTEXT_SYNCHRONOUSLY|D:\\CenterForYouAdmin\\lib\\features\\users\\presentation\\add_edit_student_screen.dart|89|21|7|Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check.
+INFO|LINT|USE_BUILD_CONTEXT_SYNCHRONOUSLY|D:\\CenterForYouAdmin\\lib\\features\\users\\presentation\\add_edit_student_screen.dart|95|30|7|Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check.

@@ -14,4 +14,5 @@ class AppRoutes {
   static const String graduation = '/graduation';
   static const String deviceManagement = '/device-management';
   static const String addSubjectToUser = '/add-subject-to-user';
+  static const String addEditStudent = '/add-edit-student';
 }

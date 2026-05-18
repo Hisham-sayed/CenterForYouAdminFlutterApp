@@ -320,17 +320,58 @@ class _AddSubjectToUserScreenState extends State<AddSubjectToUserScreen> {
                         listenable: _subjectsController,
                         builder: (context, _) {
                             final subjects = _subjectsController.subjects;
+                            final allSelected = subjects.isNotEmpty && subjects.every((s) => _selectedSubjectIds.contains(s.id));
+                            
                             return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    'AVAILABLE SUBJECTS (${subjects.length})',
-                                    style: const TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      letterSpacing: 0.5,
-                                    ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'AVAILABLE SUBJECTS (${subjects.length})',
+                                        style: const TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      if (subjects.isNotEmpty)
+                                        OutlinedButton.icon(
+                                          onPressed: () {
+                                            setState(() {
+                                              if (allSelected) {
+                                                for (var s in subjects) {
+                                                  _selectedSubjectIds.remove(s.id);
+                                                }
+                                              } else {
+                                                for (var s in subjects) {
+                                                  _selectedSubjectIds.add(s.id);
+                                                }
+                                              }
+                                            });
+                                          },
+                                          icon: Icon(
+                                            allSelected ? Icons.remove_done : Icons.done_all, 
+                                            size: 16,
+                                          ),
+                                          label: Text(
+                                            allSelected ? 'Deselect All' : 'Select All',
+                                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                          ),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: AppColors.primary,
+                                            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                                            side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                            elevation: 0,
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                   const SizedBox(height: 16),
                                   

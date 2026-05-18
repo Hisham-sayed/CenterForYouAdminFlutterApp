@@ -2,6 +2,7 @@ class User {
   final String id;
   final String name;
   final String email;
+  final int? category;
   final String? avatarUrl; 
   final String? phoneNumber;
   final String role; 
@@ -13,6 +14,7 @@ class User {
     required this.id,
     required this.name,
     required this.email,
+    this.category,
     this.avatarUrl,
     this.phoneNumber,
     this.role = 'Student',
@@ -41,11 +43,27 @@ class User {
     return name[0].toUpperCase();
   }
 
+  static int? _parseCategory(Map<String, dynamic> json) {
+    final val = json['studentCategory'] ?? json['StudentCategory'] ?? json['category'] ?? json['Category'];
+    if (val == null) return null;
+    if (val is int) return val;
+    if (val is String) {
+      final parsed = int.tryParse(val);
+      if (parsed != null) return parsed;
+      final lower = val.toLowerCase();
+      if (lower == 'college') return 0;
+      if (lower == 'institute') return 1;
+      if (lower == 'equivalence') return 2;
+    }
+    return null;
+  }
+
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: (json['id'] ?? json['userId']).toString(),
       name: json['fullName'] ?? json['name'] ?? '',
       email: json['email'] ?? '',
+      category: _parseCategory(json),
       phoneNumber: json['phoneNumber'],
       role: json['role'] ?? 'Student',
       avatarUrl: json['avatarUrl'], 

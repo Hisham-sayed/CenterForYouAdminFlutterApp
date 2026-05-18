@@ -1,0 +1,2 @@
+[info] The private field _currentSpeed could be 'final' (d:\centerforyouadmin\lib\test_drive_video_player\custom_video_controls.dart:21:10)
+[info] Parameter 'key' could be a super parameter (d:\centerforyouadmin\lib\test_drive_video_player\test_drive_video_player_screen.dart:6:9)

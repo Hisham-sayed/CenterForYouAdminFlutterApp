@@ -1,0 +1,8 @@
+﻿Analyzing dashboard, main.dart...
+
+  error - lib\features\dashboard\presentation\widgets\video_player\video_player_widget.dart:815:62 - The getter 'speedOptions' isn't defined for the type 'DashboardVideoPlayer'. Try importing the library that defines 'speedOptions', correcting the name to the name of an existing getter, or defining a getter or field named 'speedOptions'. - undefined_getter
+  error - lib\features\dashboard\presentation\widgets\video_player\video_player_widget.dart:816:64 - The getter 'qualityOptions' isn't defined for the type 'DashboardVideoPlayer'. Try importing the library that defines 'qualityOptions', correcting the name to the name of an existing getter, or defining a getter or field named 'qualityOptions'. - undefined_getter
+warning - lib\features\dashboard\dashboard_controller.dart:1:8 - Unused import: 'package:flutter/material.dart'. Try removing the import directive. - unused_import
+   info - lib\features\dashboard\presentation\widgets\video_player\video_player_controls.dart:1:8 - The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart'. Try removing the import directive. - unnecessary_import
+
+4 issues found.

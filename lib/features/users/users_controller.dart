@@ -115,6 +115,50 @@ class UsersController extends BaseController {
     });
   }
 
+  Future<bool> addStudent(Map<String, dynamic> data) async {
+    return await safeCall(() async {
+      final response = await ApiService().post('/admin/students', body: data);
+      if (response == null || response['isSuccess'] != true) {
+        throw Exception(response?['message'] ?? 'Failed to add student');
+      }
+      await fetchUsers(); // Refresh list after adding
+    });
+  }
+
+  Future<User?> getStudentDetails(String studentId) async {
+    User? user;
+    await safeCall(() async {
+      final response = await ApiService().get('/admin/students/$studentId');
+      if (response != null && response['isSuccess'] == true && response['data'] != null) {
+        user = User.fromJson(response['data']);
+      } else {
+        throw Exception(response?['message'] ?? 'Failed to get student details');
+      }
+    });
+    return user;
+  }
+
+  Future<bool> editStudent(String studentId, Map<String, dynamic> data) async {
+    return await safeCall(() async {
+      final response = await ApiService().put('/admin/students/$studentId', body: data);
+      if (response == null || response['isSuccess'] != true) {
+        throw Exception(response?['message'] ?? 'Failed to update student');
+      }
+      await fetchUsers(); // Refresh list after edit
+    });
+  }
+
+  Future<bool> changeStudentPassword(String studentId, String newPassword) async {
+    return await safeCall(() async {
+      final response = await ApiService().put('/admin/students/$studentId/change-password', body: {
+        'newPassword': newPassword
+      });
+      if (response == null || response['isSuccess'] != true) {
+        throw Exception(response?['message'] ?? 'Failed to change password');
+      }
+    });
+  }
+
   // Pagination
   int _currentPage = 1;
   final int _pageSize = 10;
@@ -128,7 +172,7 @@ class UsersController extends BaseController {
     _hasNextPage = true;
   }
 
-  Future<void> fetchUsers({String searchKey = '', bool isLoadMore = false}) async {
+  Future<void> fetchUsers({String searchKey = '', bool isLoadMore = false, int? category}) async {
     // If loading more, strictly avoid global loading state
     if (isLoadMore) {
       if (isLoading || isLoadMoreRunning || !_hasNextPage) return;
@@ -136,7 +180,7 @@ class UsersController extends BaseController {
       notifyListeners();
 
       try {
-         await _performFetch(searchKey, isLoadMore: true);
+         await _performFetch(searchKey, isLoadMore: true, category: category);
       } catch (e) {
         debugPrint('Error loading more users: $e');
         // Optionally set errorMessage for snackbar without full screen error
@@ -148,16 +192,17 @@ class UsersController extends BaseController {
       // Initial load uses safeCall
       await safeCall(() async {
         resetPagination();
-        await _performFetch(searchKey, isLoadMore: false);
+        await _performFetch(searchKey, isLoadMore: false, category: category);
       });
     }
   }
 
-  Future<void> _performFetch(String searchKey, {required bool isLoadMore}) async {
-    final queryParams = {
+  Future<void> _performFetch(String searchKey, {required bool isLoadMore, int? category}) async {
+    final queryParams = <String, dynamic>{
         'pageNumber': isLoadMore ? '${_currentPage + 1}' : '1',
         'pageSize': '$_pageSize',
         if (searchKey.isNotEmpty) 'searchKey': searchKey,
+        if (category != null) 'category': category.toString(),
     };
 
     final response = await ApiService().get('/enrolled-users', queryParams: queryParams);
