@@ -26,15 +26,18 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
   dynamic termData;
   List<String> breadcrumbs = [];
   String screenTitle = 'Subjects';
+  String? yearId;
+  Section _selectedSection = Section.taxation;
 
   @override
-    void didChangeDependencies() {
+  void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map<String, dynamic>) {
         termData = args['data'];
         breadcrumbs = List<String>.from(args['breadcrumbs'] ?? []);
+        yearId = args['yearId']?.toString();
         
         // Load Subjects for this term
         String termId = '1';
@@ -45,7 +48,7 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
           screenTitle = 'Subjects';
         }
         
-        _controller.loadSubjects(termId).whenComplete(() {
+        _controller.loadSubjects(termId, section: yearId == '6' ? _selectedSection : null).whenComplete(() {
           if (mounted) {
             setState(() {
               _isFirstLoad = false;
@@ -74,16 +77,17 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
       barrierDismissible: false, 
       builder: (context) => SubjectDialog(
         subject: existingSubject,
+        yearId: yearId,
         controller: _controller,
-        onSave: (title, image) async {
+        onSave: (title, image, section) async {
           bool success;
           if (existingSubject == null) {
-            success = await _controller.addSubject(termId, title, image: image);
+            success = await _controller.addSubject(termId, title, image: image, section: section);
           } else {
-            success = await _controller.editSubject(existingSubject.id, termId, title, image: image);
+            success = await _controller.editSubject(existingSubject.id, termId, title, image: image, section: section);
           }
 
-          if (!success && mounted) {
+          if (!success && context.mounted) {
              // Show error if failed
              ErrorSnackBar.show(context, _controller.errorMessage ?? 'An error occurred');
           }
@@ -132,6 +136,29 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
     );
   }
 
+  Widget _buildSectionChip(String label, Section section) {
+    final isSelected = _selectedSection == section;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (selected && _selectedSection != section) {
+          setState(() {
+            _selectedSection = section;
+          });
+          String termId = '1';
+          try { termId = (termData as dynamic).id; } catch (_) {}
+          _controller.loadSubjects(termId, section: section);
+        }
+      },
+      selectedColor: AppColors.primary,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.black : Colors.white,
+      ),
+      backgroundColor: const Color(0xFF11141C),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final fullBreadcrumbs = [...breadcrumbs, screenTitle];
@@ -144,117 +171,137 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.black),
       ),
-      body: ListenableBuilder(
-        listenable: _controller,
-        builder: (context, _) {
-          if (_isFirstLoad || _controller.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (_controller.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+      body: Column(
+        children: [
+          if (yearId == '6')
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
                   children: [
-                    const Icon(Icons.signal_wifi_off, size: 48, color: AppColors.textSecondary),
-                    const SizedBox(height: 16),
-                    Text(
-                      _controller.errorMessage ?? 'Connection Error',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                         setState(() { _isFirstLoad = true; });
-                         String termId = '1';
-                         try { termId = (termData as dynamic).id; } catch (_) {}
-                         _controller.loadSubjects(termId).whenComplete(() {
-                            if (mounted) setState(() { _isFirstLoad = false; });
-                         });
-                      },
-                      child: const Text('Retry'),
-                    )
+                    _buildSectionChip('ضرائب', Section.taxation),
+                    const SizedBox(width: 8),
+                    _buildSectionChip('مؤسسات', Section.institutions),
                   ],
                 ),
               ),
-            );
-          }
-          
-          if (_controller.subjects.isEmpty) {
-             return const Center(child: Text('No subjects found', style: TextStyle(color: AppColors.textSecondary)));
-          }
+            ),
+          Expanded(
+            child: ListenableBuilder(
+              listenable: _controller,
+              builder: (context, _) {
+                if (_isFirstLoad || _controller.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-            itemCount: _controller.subjects.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final subject = _controller.subjects[index];
-              return Card(
-                child: InkWell(
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context, 
-                      AppRoutes.subjectDetail, 
-                      arguments: {
-                         'data': subject, 
-                         'breadcrumbs': fullBreadcrumbs,
-                      }
+                if (_controller.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.signal_wifi_off, size: 48, color: AppColors.textSecondary),
+                          const SizedBox(height: 16),
+                          Text(
+                            _controller.errorMessage ?? 'Connection Error',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                               setState(() { _isFirstLoad = true; });
+                               String termId = '1';
+                               try { termId = (termData as dynamic).id; } catch (_) {}
+                               _controller.loadSubjects(termId, section: yearId == '6' ? _selectedSection : null).whenComplete(() {
+                                  if (mounted) setState(() { _isFirstLoad = false; });
+                               });
+                            },
+                            child: const Text('Retry'),
+                          )
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                
+                if (_controller.subjects.isEmpty) {
+                   return const Center(child: Text('No subjects found', style: TextStyle(color: AppColors.textSecondary)));
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                  itemCount: _controller.subjects.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final subject = _controller.subjects[index];
+                    return Card(
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context, 
+                            AppRoutes.subjectDetail, 
+                            arguments: {
+                               'data': subject, 
+                               'breadcrumbs': fullBreadcrumbs,
+                            }
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: AppNetworkImage(
+                                  imagePath: subject.imageUrl,
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: AutoDirection(
+                                  text: subject.title,
+                                  child: Text(
+                                    subject.title,
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                   IconButton(
+                                    icon: const Icon(Icons.edit, color: AppColors.textSecondary),
+                                    onPressed: () => _showAddEditDialog(existingSubject: subject),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: AppColors.error),
+                                    onPressed: () => _deleteSubject(subject),
+                                  ),
+                                  const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     );
                   },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: AppNetworkImage(
-                            imagePath: subject.imageUrl,
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: AutoDirection(
-                            text: subject.title,
-                            child: Text(
-                              subject.title,
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                             IconButton(
-                              icon: const Icon(Icons.edit, color: AppColors.textSecondary),
-                              onPressed: () => _showAddEditDialog(existingSubject: subject),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: AppColors.error),
-                              onPressed: () => _deleteSubject(subject),
-                            ),
-                            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

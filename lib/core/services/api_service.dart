@@ -232,9 +232,13 @@ class ApiService {
   }
 
   // DELETE Request
-  Future<dynamic> delete(String endpoint) async {
+  Future<dynamic> delete(String endpoint, {dynamic body}) async {
     final uri = Uri.parse('$baseUrl$endpoint');
-    return _performRequest(() => _client.delete(uri, headers: _headers));
+    return _performRequest(() => _client.delete(
+        uri, 
+        headers: _headers,
+        body: body != null ? json.encode(body) : null,
+    ));
   }
 
   // Generic Multipart Request

@@ -489,7 +489,60 @@ class _UsersListScreenState extends State<UsersListScreen> {
                                         ),
                                       ),
                                     ],
-                                  )
+                                  ),
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          builder: (ctx) => AppDialog(
+                                            title: 'Delete User',
+                                            content: Text(
+                                              'Are you sure you want to permanently delete ${user.name}? This action cannot be undone and all related user data will be lost.',
+                                              style: const TextStyle(color: AppColors.textSecondary),
+                                            ),
+                                            controller: _controller,
+                                            confirmText: 'Delete Permanently',
+                                            loadingText: 'Deleting...',
+                                            onConfirm: () async {
+                                              final success = await _controller.deleteUser(user.email);
+                                              if (!context.mounted || !ctx.mounted) return;
+                                              if (success) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('User deleted successfully'),
+                                                    backgroundColor: Colors.green,
+                                                  ),
+                                                );
+                                                Navigator.pop(ctx);
+                                              } else {
+                                                if (_controller.hasError) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(content: Text(_controller.errorMessage ?? 'Failed to delete user')),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.person_remove, color: AppColors.error, size: 18),
+                                      label: const Text(
+                                        'Delete User',
+                                        style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(color: AppColors.error, width: 1.5),
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(25),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),

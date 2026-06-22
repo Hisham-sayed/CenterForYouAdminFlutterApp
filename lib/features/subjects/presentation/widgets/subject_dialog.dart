@@ -9,14 +9,16 @@ import '../../../../core/architecture/base_controller.dart';
 
 class SubjectDialog extends StatefulWidget {
   final Subject? subject;
-  final Future<bool> Function(String title, File? image) onSave;
+  final Future<bool> Function(String title, File? image, Section section) onSave;
   final BaseController controller;
+  final String? yearId;
 
   const SubjectDialog({
     super.key,
     this.subject,
     required this.onSave,
     required this.controller,
+    this.yearId,
   });
 
   @override
@@ -28,11 +30,13 @@ class _SubjectDialogState extends State<SubjectDialog> {
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late Section _selectedSection;
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.subject?.title ?? '');
+    _selectedSection = widget.subject?.section ?? Section.taxation;
   }
 
   @override
@@ -54,7 +58,7 @@ class _SubjectDialogState extends State<SubjectDialog> {
     if (_formKey.currentState?.validate() != true) return;
     
     // Call the provided onSave function
-    final success = await widget.onSave(_titleController.text, _selectedImage);
+    final success = await widget.onSave(_titleController.text, _selectedImage, _selectedSection);
       
     if (mounted && success) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -147,6 +151,37 @@ class _SubjectDialogState extends State<SubjectDialog> {
                         return null;
                       },
                     ),
+                    if (widget.yearId == '6') ...[
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<Section>(
+                        value: _selectedSection,
+                        decoration: InputDecoration(
+                          labelText: 'الشعبة',
+                          labelStyle: const TextStyle(color: AppColors.textSecondary),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: AppColors.textSecondary),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: AppColors.primary),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        dropdownColor: AppColors.surface,
+                        style: const TextStyle(color: AppColors.textPrimary),
+                        items: const [
+                          DropdownMenuItem(value: Section.taxation, child: Text('ضرائب')),
+                          DropdownMenuItem(value: Section.institutions, child: Text('مؤسسات')),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedSection = value;
+                            });
+                          }
+                        },
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'data/dashboard_stats_model.dart';
 // We haven't created this yet but might need it, actually removing import for now.
 
@@ -17,9 +16,11 @@ class DashboardController extends BaseController {
     await safeCall(() async {
       final response = await ApiService().get('/admin-dashboard');
 
-      if (response != null && response['isSuccess'] == true && response['hasData'] == true) {
+      if (response != null &&
+          response['isSuccess'] == true &&
+          response['hasData'] == true) {
         final data = response['data'];
-        
+
         stats = DashboardStats(
           totalStudents: data['usersCount'] ?? 0,
           totalSubjects: data['subjectsCount'] ?? 0,

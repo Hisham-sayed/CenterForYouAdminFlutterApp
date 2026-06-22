@@ -110,6 +110,7 @@ class _YearsTermsScreenState extends State<YearsTermsScreen> {
                             'data': item, // This is AcademicTerm
                             'breadcrumbs': fullBreadcrumbs,
                             'isTerm': true, 
+                            'yearId': year?.id,
                           }
                         );
                       }

@@ -31,6 +31,7 @@ class _AddSubjectToUserScreenState extends State<AddSubjectToUserScreen> {
   SubjectCategory? _selectedCategory;
   AcademicYear? _selectedYear;
   AcademicTerm? _selectedTerm;
+  Section _selectedSection = Section.taxation;
   final Set<String> _selectedSubjectIds = {}; // Store IDs instead of Subject objects
 
   @override
@@ -307,9 +308,29 @@ class _AddSubjectToUserScreenState extends State<AddSubjectToUserScreen> {
                           (val) {
                             setState(() {
                               _selectedTerm = _subjectsController.getTermsForYear(_selectedYear!.id).firstWhere((e) => e.name == val);
-                              _subjectsController.loadSubjects(_selectedTerm!.id);
+                              _subjectsController.loadSubjects(
+                                _selectedTerm!.id,
+                                section: _selectedYear?.id == '6' ? _selectedSection : null,
+                              );
                             });
                           }
+                        ),
+                      ],
+
+                      // Section Selection (if Year 6)
+                      if (_selectedYear?.id == '6' && _selectedTerm != null) ...[
+                        const SizedBox(height: 24),
+                        _buildSectionHeader('SECTION'),
+                        const SizedBox(height: 12),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildSectionChip('ضرائب', Section.taxation),
+                              const SizedBox(width: 8),
+                              _buildSectionChip('مؤسسات', Section.institutions),
+                            ],
+                          ),
                         ),
                       ],
 
@@ -481,6 +502,29 @@ class _AddSubjectToUserScreenState extends State<AddSubjectToUserScreen> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildSectionChip(String label, Section section) {
+    final isSelected = _selectedSection == section;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (selected && _selectedSection != section) {
+          setState(() {
+            _selectedSection = section;
+          });
+          if (_selectedTerm != null) {
+            _subjectsController.loadSubjects(_selectedTerm!.id, section: section);
+          }
+        }
+      },
+      selectedColor: AppColors.primary,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.black : Colors.white,
+      ),
+      backgroundColor: const Color(0xFF11141C),
     );
   }
 

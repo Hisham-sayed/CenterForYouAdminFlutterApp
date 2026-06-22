@@ -115,6 +115,24 @@ class UsersController extends BaseController {
     });
   }
 
+  Future<bool> deleteUser(String email) async {
+    return await safeCall(() async {
+      final response = await ApiService().delete(
+        '/admin/users',
+        body: { 'email': email }
+      );
+
+      if (response != null && response['isSuccess'] == true) {
+        // Remove user from list
+        _allUsers.removeWhere((u) => u.email == email);
+        filteredUsers = List.from(_allUsers);
+        notifyListeners();
+      } else {
+        throw Exception(response?['message'] ?? 'Failed to delete user');
+      }
+    });
+  }
+
   Future<bool> addStudent(Map<String, dynamic> data) async {
     return await safeCall(() async {
       final response = await ApiService().post('/admin/students', body: data);

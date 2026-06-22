@@ -75,9 +75,13 @@ class SubjectsController extends BaseController {
   List<Lesson> lessons = [];
   List<Video> videos = [];
   
-  Future<void> loadSubjects(String termId) async {
+  Future<void> loadSubjects(String termId, {Section? section}) async {
     await safeCall(() async {
-      final response = await ApiService().get('/terms/$termId/subjects');
+      final queryParams = <String, dynamic>{};
+      if (section != null) {
+        queryParams['section'] = section.value.toString();
+      }
+      final response = await ApiService().get('/terms/$termId/subjects', queryParams: queryParams.isNotEmpty ? queryParams : null);
       if (response != null && response['isSuccess'] == true && response['hasData'] == true) {
         final List data = response['data'];
         subjects = data.map((json) => Subject.fromJson(json)).toList();
@@ -88,11 +92,11 @@ class SubjectsController extends BaseController {
   }
 
   // Add Subject (Requires termId, title, and optional image)
-  Future<bool> addSubject(String termId, String title, {File? image}) async {
+  Future<bool> addSubject(String termId, String title, {File? image, Section section = Section.taxation}) async {
     return await safeCall(() async {
       final response = await ApiService().postMultipart(
         '/add-subject', 
-        { 'TermId': termId, 'Title': title }, // Using PascalCase keys if backend expects them match record properties? 
+        { 'TermId': termId, 'Title': title, 'Section': section.value.toString() }, // Using PascalCase keys if backend expects them match record properties? 
         // Prompt says: public record AddSubjectRequest(int TermId, string Title...
         // Usually model binding is case-insensitive in ASP.NET, but safer to match or use camelCase. 
         // Previous code used camelCase 'termId'. I will stick to what works or use PasCal if suggested.
@@ -112,11 +116,11 @@ class SubjectsController extends BaseController {
     });
   }
 
-  Future<bool> editSubject(String id, String termId, String newTitle, {File? image}) async {
+  Future<bool> editSubject(String id, String termId, String newTitle, {File? image, Section section = Section.taxation}) async {
     return await safeCall(() async {
       final response = await ApiService().putMultipart(
         '/update-subject',
-        { 'Id': id, 'Title': newTitle }, // Correct keys for UpdateSubjectRequest(int Id, string Title...)
+        { 'Id': id, 'Title': newTitle, 'Section': section.value.toString() }, // Correct keys for UpdateSubjectRequest(int Id, string Title...)
         file: image,
         fileField: 'Image',
       );
