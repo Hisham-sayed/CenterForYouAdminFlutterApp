@@ -74,8 +74,12 @@ class SubjectsController extends BaseController {
   List<Exam> exams = [];
   List<Lesson> lessons = [];
   List<Video> videos = [];
+
+  // Track the active section filter so reloads after add/edit/delete preserve it.
+  Section? _activeSection;
   
   Future<void> loadSubjects(String termId, {Section? section}) async {
+    _activeSection = section;
     await safeCall(() async {
       final queryParams = <String, dynamic>{};
       if (section != null) {
@@ -91,41 +95,39 @@ class SubjectsController extends BaseController {
     });
   }
 
+  /// Reload with the same section filter that was last used.
+  Future<void> _reloadSubjects(String termId) async {
+    await loadSubjects(termId, section: _activeSection);
+  }
+
   // Add Subject (Requires termId, title, and optional image)
-  Future<bool> addSubject(String termId, String title, {File? image, Section section = Section.taxation}) async {
+  Future<bool> addSubject(String termId, String title, {File? image, required int sectionValue}) async {
     return await safeCall(() async {
       final response = await ApiService().postMultipart(
         '/add-subject', 
-        { 'TermId': termId, 'Title': title, 'Section': section.value.toString() }, // Using PascalCase keys if backend expects them match record properties? 
-        // Prompt says: public record AddSubjectRequest(int TermId, string Title...
-        // Usually model binding is case-insensitive in ASP.NET, but safer to match or use camelCase. 
-        // Previous code used camelCase 'termId'. I will stick to what works or use PasCal if suggested.
-        // Quick check: Prompt explicitly showed "public record AddSubjectRequest(int TermId, string Title...)". 
-        // Just to be safe, I will send both or stick to standard naming conventions. 
-        // Wait, standard ASP.NET Core binds 'termId' to 'TermId' fine.
-        // I will use PascalCase to be absolutely sure as per "Ensure duplicate keys match backend contract exactly".
-         file: image,
+        { 'TermId': termId, 'Title': title, 'Section': sectionValue.toString() }, // Using PascalCase keys if backend expects them match record properties? 
+        file: image,
         fileField: 'Image', // PascalCase for IFormFile? Image
       );
       
       if (response != null && response['isSuccess'] == true) {
-        await loadSubjects(termId);
+        await _reloadSubjects(termId);
       } else {
         throw Exception('Failed to add subject');
       }
     });
   }
 
-  Future<bool> editSubject(String id, String termId, String newTitle, {File? image, Section section = Section.taxation}) async {
+  Future<bool> editSubject(String id, String termId, String newTitle, {File? image, required int sectionValue}) async {
     return await safeCall(() async {
       final response = await ApiService().putMultipart(
         '/update-subject',
-        { 'Id': id, 'Title': newTitle, 'Section': section.value.toString() }, // Correct keys for UpdateSubjectRequest(int Id, string Title...)
+        { 'Id': id, 'Title': newTitle, 'Section': sectionValue.toString() }, // Correct keys for UpdateSubjectRequest(int Id, string Title...)
         file: image,
         fileField: 'Image',
       );
       if (response != null && response['isSuccess'] == true) {
-        await loadSubjects(termId);
+        await _reloadSubjects(termId);
       } else {
          throw Exception('Failed to edit subject');
       }
@@ -136,7 +138,7 @@ class SubjectsController extends BaseController {
     return await safeCall(() async {
       final response = await ApiService().delete('/subjects/$id/subject');
       if (response != null && response['isSuccess'] == true) {
-        await loadSubjects(termId);
+        await _reloadSubjects(termId);
       } else {
          throw Exception('Failed to delete subject');
       }

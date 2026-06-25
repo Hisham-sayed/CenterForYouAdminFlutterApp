@@ -79,12 +79,12 @@ class _SubjectsListScreenState extends State<SubjectsListScreen> {
         subject: existingSubject,
         yearId: yearId,
         controller: _controller,
-        onSave: (title, image, section) async {
+        onSave: (title, image, sectionValue) async {
           bool success;
           if (existingSubject == null) {
-            success = await _controller.addSubject(termId, title, image: image, section: section);
+            success = await _controller.addSubject(termId, title, image: image, sectionValue: sectionValue);
           } else {
-            success = await _controller.editSubject(existingSubject.id, termId, title, image: image, section: section);
+            success = await _controller.editSubject(existingSubject.id, termId, title, image: image, sectionValue: sectionValue);
           }
 
           if (!success && context.mounted) {

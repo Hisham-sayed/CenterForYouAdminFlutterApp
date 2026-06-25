@@ -9,7 +9,9 @@ import '../../../../core/architecture/base_controller.dart';
 
 class SubjectDialog extends StatefulWidget {
   final Subject? subject;
-  final Future<bool> Function(String title, File? image, Section section) onSave;
+  /// Callback receives (title, image, sectionValue).
+  /// sectionValue is the raw int: 0=None, 1=Taxation, 2=Institutions.
+  final Future<bool> Function(String title, File? image, int sectionValue) onSave;
   final BaseController controller;
   final String? yearId;
 
@@ -57,8 +59,12 @@ class _SubjectDialogState extends State<SubjectDialog> {
   Future<void> _handleSubmit() async {
     if (_formKey.currentState?.validate() != true) return;
     
-    // Call the provided onSave function
-    final success = await widget.onSave(_titleController.text, _selectedImage, _selectedSection);
+    // Compute the raw section int to send to the backend.
+    // Year 6 = use the dropdown selection (1 or 2).
+    // All other years = always send 0 (None) so the backend doesn't default incorrectly.
+    final int sectionValue = widget.yearId == '6' ? _selectedSection.value : 0;
+    
+    final success = await widget.onSave(_titleController.text, _selectedImage, sectionValue);
       
     if (mounted && success) {
       ScaffoldMessenger.of(context).showSnackBar(
